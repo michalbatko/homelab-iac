@@ -14,6 +14,7 @@ jobs:
       matrix:
         folder:
           - terraform/proxmox
+          - terraform/cloudflare
           # Add more directories for additional providers as needed
 
     steps:
