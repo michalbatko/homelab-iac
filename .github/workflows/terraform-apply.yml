@@ -1,0 +1,35 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  apply:
+    name: Terraform Apply
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        folder:
+          - terraform/proxmox
+          - terraform/cloudflare
+          # Add more directories for additional providers as needed
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.12.2
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ${{ matrix.folder }}
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: ${{ matrix.folder }}
