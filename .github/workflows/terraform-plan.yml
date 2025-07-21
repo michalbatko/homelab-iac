@@ -2,8 +2,8 @@ name: Terraform Plan
 
 on:
   push:
-    branches:
-      - "**"
+    branches-ignore:
+      - main
 
 jobs:
   terraform:
