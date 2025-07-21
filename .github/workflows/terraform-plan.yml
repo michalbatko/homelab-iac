@@ -38,5 +38,5 @@ jobs:
         working-directory: ${{ matrix.folder }}
 
       - name: Terraform Plan
-        run: terraform plan -no-color
+        run: terraform plan
         working-directory: ${{ matrix.folder }}
