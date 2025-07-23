@@ -1,0 +1,132 @@
+name: CICD
+
+on:
+  # Trigger for validating changes when a Pull Request is opened or updated.
+  pull_request:
+    branches:
+      - main
+
+  # Trigger for deploying changes after a Pull Request is merged.
+  workflow_run:
+    workflows: ["CICD"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  check-formatting:
+    name:   Check Code Formatting
+    runs-on: self-hosted
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.12.2
+
+    - name: Check Terraform Formatting
+      id: fmt_check
+      run: terraform fmt -check -diff -recursive ./terraform
+      working-directory: ./terraform
+      continue-on-error: true
+
+    - name: Show Formatting Diff
+      if: steps.fmt_check.outcome == 'failure'
+      run: |
+        echo "Terraform formatting check failed. Please review the following diff:"
+        git diff --exit-code
+        exit 1
+
+  validate-terraform:
+    name: Validate Changes
+    runs-on: self-hosted
+    if: github.event_name == 'pull_request'
+    needs: check-formatting
+
+    strategy:
+      fail-fast: false
+      matrix:
+        folder:
+          - terraform/proxmox
+          - terraform/cloudflare
+          # Add more directories for additional Terraform providers as needed
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.12.2
+
+    - name: Initialize Terraform
+      run: terraform init -backend=false
+      working-directory: ${{ matrix.folder }}
+
+    - name: Validate Terraform Configuration
+      run: terraform validate
+      working-directory: ${{ matrix.folder }}
+
+    - name: Generate Terraform Plan
+      id: plan_output
+      # -no-color is used to ensure the plan output is clean for artifact storage and parsing.
+      run: terraform plan -no-color -out=terraform.tfplan
+      working-directory: ${{ matrix.folder }}
+
+    - name: Upload Terraform Plan Artifact
+      if: success() && steps.plan_output.outcome == 'success'
+      uses: actions/upload-artifact@v4
+      with:
+        name: tfplan-${{ matrix.folder }}-${{ github.sha }}
+        path: ${{ matrix.folder }}/terraform.tfplan
+        retention-days: 90
+        # Retention days can be adjusted based on needs, default is 90 days.
+
+  deploy-terraform:
+    name: Deploy Changes
+    runs-on: self-hosted
+    if: |
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.pull_requests[0].merged == true &&
+      github.event.workflow_run.pull_requests[0].base.ref == 'main'
+    needs: [check-formatting, validate-terraform]
+
+    strategy:
+      matrix:
+        folder:
+          - terraform/proxmox
+          - terraform/cloudflare
+          # Add more directories for additional Terraform providers as needed
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.workflow_run.head_sha }}
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.12.2
+
+    - name: Download Terraform Plan Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: tfplan-${{ matrix.folder }}-${{ github.event.workflow_run.head_sha }}
+        path: ${{ matrix.folder }}
+
+    - name: Initialize Terraform
+      run: terraform init -backend=false
+      working-directory: ${{ matrix.folder }}
+
+    - name: Apply Terraform Plan
+      run: terraform apply -auto-approve ./terraform.tfplan
+      working-directory: ${{ matrix.folder }}
