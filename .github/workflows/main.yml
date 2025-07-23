@@ -47,9 +47,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        folder:
-          - terraform/proxmox
-          - terraform/cloudflare
+        directory:
+          - proxmox
+          - cloudflare
           # Add more directories for additional Terraform providers as needed
 
     steps:
@@ -63,24 +63,24 @@ jobs:
 
     - name: Initialize Terraform
       run: terraform init -backend=false
-      working-directory: ${{ matrix.folder }}
+      working-directory: terraform/${{ matrix.directory }}
 
     - name: Validate Terraform Configuration
       run: terraform validate
-      working-directory: ${{ matrix.folder }}
+      working-directory: terraform/${{ matrix.directory }}
 
     - name: Generate Terraform Plan
       id: plan_output
       # -no-color is used to ensure the plan output is clean for artifact storage and parsing.
       run: terraform plan -no-color -out=terraform.tfplan
-      working-directory: ${{ matrix.folder }}
+      working-directory: terraform/${{ matrix.directory }}
 
     - name: Upload Terraform Plan Artifact
       if: success() && steps.plan_output.outcome == 'success'
       uses: actions/upload-artifact@v4
       with:
-        name: tfplan-${{ matrix.folder }}-${{ github.event.pull_request.head.sha }}
-        path: ${{ matrix.folder }}/terraform.tfplan
+        name: tfplan-${{ matrix.directory }}-${{ github.event.pull_request.head.sha }}
+        path: terraform/${{ matrix.directory }}/terraform.tfplan
         retention-days: 90
         # Retention days can be adjusted based on needs, default is 90 days.
 
@@ -91,9 +91,9 @@ jobs:
 
     strategy:
       matrix:
-        folder:
-          - terraform/proxmox
-          - terraform/cloudflare
+        directory:
+          - proxmox
+          - cloudflare
           # Add more directories for additional Terraform providers as needed
 
     steps:
@@ -108,13 +108,13 @@ jobs:
     - name: Download Terraform Plan Artifact
       uses: actions/download-artifact@v4
       with:
-        name: tfplan-${{ matrix.folder }}-${{ github.event.pull_request.head.sha }}
-        path: ${{ matrix.folder }}
+        name: tfplan-${{ matrix.directory }}-${{ github.event.pull_request.head.sha }}
+        path: terraform/${{ matrix.directory }}
 
     - name: Initialize Terraform
       run: terraform init -backend=false
-      working-directory: ${{ matrix.folder }}
+      working-directory: terraform/${{ matrix.directory }}
 
     - name: Apply Terraform Plan
       run: terraform apply -auto-approve ./terraform.tfplan
-      working-directory: ${{ matrix.folder }}
+      working-directory: terraform/${{ matrix.directory }}
