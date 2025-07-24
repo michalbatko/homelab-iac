@@ -1,0 +1,69 @@
+name: Build
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  check-formatting:
+    name: Check Code Formatting
+    runs-on: self-hosted
+    environment: homelab
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+    - name: Check Terraform Formatting
+      id: fmt_check
+      run: terraform fmt -check -diff -recursive ./terraform
+      working-directory: ./terraform
+      continue-on-error: true
+
+    - name: Show Formatting Diff
+      if: steps.fmt_check.outcome == 'failure'
+      run: |
+        echo "Terraform formatting check failed. Please review the following diff:"
+        git diff --exit-code
+        exit 1
+
+  validate-terraform:
+    name: Validate Changes
+    runs-on: self-hosted
+    environment: homelab
+
+    strategy:
+      fail-fast: false
+      matrix:
+        directory:
+          - proxmox
+          - cloudflare
+          # Add more directories for additional Terraform providers as needed
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ vars.TERRAFORM_VERSION }}
+
+    - name: Initialize Terraform
+      run: terraform init -backend=false
+      working-directory: terraform/${{ matrix.directory }}
+
+    - name: Validate Terraform Configuration
+      run: terraform validate
+      working-directory: terraform/${{ matrix.directory }}
+
+    - name: Generate Terraform Plan
+      id: plan_output
+      run: terraform plan
+      working-directory: terraform/${{ matrix.directory }}

@@ -12,7 +12,7 @@ on:
 
 jobs:
   check-formatting:
-    name:   Check Code Formatting
+    name: Check Code Formatting
     runs-on: self-hosted
     if: github.event.action != 'closed'
 
