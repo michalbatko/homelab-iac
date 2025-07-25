@@ -12,10 +12,12 @@ permissions:
 
 jobs:
   deploy-terraform:
+    if: github.event.pull_request.merged == true
     name: Deploy Changes
     runs-on: self-hosted
     environment: homelab
-    if: github.event.pull_request.merged == true
+    env:
+      PROXMOX_VE_API_TOKEN: ${{ secrets.PROXMOX_VE_API_TOKEN }}
 
     strategy:
       matrix:
