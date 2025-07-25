@@ -40,6 +40,8 @@ jobs:
     name: Validate Changes
     runs-on: self-hosted
     environment: homelab
+    env:
+      PROXMOX_VE_API_TOKEN: ${{ secrets.PROXMOX_VE_API_TOKEN }}
 
     strategy:
       fail-fast: false
