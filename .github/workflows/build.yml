@@ -43,14 +43,6 @@ jobs:
     env:
       PROXMOX_VE_API_TOKEN: ${{ secrets.PROXMOX_VE_API_TOKEN }}
 
-    strategy:
-      fail-fast: false
-      matrix:
-        directory:
-          - proxmox
-          - cloudflare
-          # Add more directories for additional Terraform providers as needed
-
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
@@ -62,13 +54,13 @@ jobs:
 
     - name: Initialize Terraform
       run: terraform init -backend=false
-      working-directory: terraform/${{ matrix.directory }}
+      working-directory: ./terraform
 
     - name: Validate Terraform Configuration
       run: terraform validate
-      working-directory: terraform/${{ matrix.directory }}
+      working-directory: ./terraform
 
     - name: Generate Terraform Plan
       id: plan_output
       run: terraform plan
-      working-directory: terraform/${{ matrix.directory }}
+      working-directory: ./terraform
