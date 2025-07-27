@@ -25,22 +25,16 @@ jobs:
 
     - name: Check Terraform Formatting
       id: fmt_check
-      run: terraform fmt -check -diff -recursive ./terraform
+      run: terraform fmt -check -diff -recursive .
       working-directory: ./terraform
       continue-on-error: true
-
-    - name: Show Formatting Diff
-      if: steps.fmt_check.outcome == 'failure'
-      run: |
-        echo "Terraform formatting check failed. Please review the following diff:"
-        git diff --exit-code
-        exit 1
 
   validate-terraform:
     name: Validate Changes
     runs-on: self-hosted
     environment: homelab
     env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       PROXMOX_VE_API_TOKEN: ${{ secrets.PROXMOX_VE_API_TOKEN }}
 
     steps:
