@@ -17,6 +17,7 @@ jobs:
     runs-on: self-hosted
     environment: homelab
     env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       PROXMOX_VE_API_TOKEN: ${{ secrets.PROXMOX_VE_API_TOKEN }}
 
     steps:
