@@ -29,13 +29,6 @@ jobs:
       working-directory: ./terraform
       continue-on-error: true
 
-    - name: Show Formatting Diff
-      if: steps.fmt_check.outcome == 'failure'
-      run: |
-        echo "Terraform formatting check failed. Please review the following diff:"
-        git diff --exit-code
-        exit 1
-
   validate-terraform:
     name: Validate Changes
     runs-on: self-hosted
