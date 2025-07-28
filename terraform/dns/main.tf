@@ -4,12 +4,12 @@ resource "proxmox_virtual_environment_container" "dns" {
   vm_id       = 100
 
   cpu {
-    cores = 1 
+    cores = 1
   }
 
   memory {
-    dedicated = 1024 
-    swap      = 512 
+    dedicated = 1024
+    swap      = 512
   }
 
   disk {
