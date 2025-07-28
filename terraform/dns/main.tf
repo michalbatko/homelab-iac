@@ -4,12 +4,12 @@ resource "proxmox_virtual_environment_container" "dns" {
   vm_id       = 100
 
   cpu {
-    cores = 1 
+    cores = 1
   }
 
   memory {
-    dedicated = 1024 
-    swap      = 512 
+    dedicated = 1024
+    swap      = 512
   }
 
   disk {
@@ -30,7 +30,7 @@ resource "proxmox_virtual_environment_container" "dns" {
     hostname = "dns"
     ip_config {
       ipv4 {
-        address = "192.168.100.20"
+        address = "192.168.100.20/24"
         gateway = "192.168.100.1"
       }
     }
