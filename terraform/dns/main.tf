@@ -34,6 +34,11 @@ resource "proxmox_virtual_environment_container" "dns" {
         gateway = "192.168.100.1"
       }
     }
+    user_account {
+      keys = [
+        var.ansible_ssh_public_key
+      ]
+    }
   }
 
   unprivileged = true
