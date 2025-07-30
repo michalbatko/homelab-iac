@@ -4,14 +4,21 @@ terraform {
       source  = "cloudflare/cloudflare"
       version = "~> 5"
     }
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 6"
+    }
     proxmox = {
       source  = "bpg/proxmox"
-      version = "~> 0.80"
+      version = "~> 0"
     }
   }
 }
 
 provider "cloudflare" {
+}
+
+provider "google" {
 }
 
 provider "proxmox" {
