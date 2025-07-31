@@ -47,7 +47,7 @@ jobs:
         terraform_version: ${{ vars.TERRAFORM_VERSION }}
 
     - name: Initialize Terraform
-      run: terraform init -backend=false
+      run: terraform init
       working-directory: ./terraform
 
     - name: Validate Terraform Configuration
