@@ -36,7 +36,8 @@ resource "proxmox_virtual_environment_container" "dns" {
     }
     user_account {
       keys = [
-        var.ansible_ssh_public_key
+        var.ansible_ssh_public_key,
+        var.michal_ssh_public_key
       ]
     }
   }
