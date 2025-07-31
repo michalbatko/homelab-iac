@@ -1,5 +1,5 @@
 resource "proxmox_virtual_environment_container" "dns" {
-  description = "AdGuard Home DNS server"
+  description = "AdGuard Home DNS"
   node_name   = "infra"
   vm_id       = 100
 
