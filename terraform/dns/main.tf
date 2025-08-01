@@ -18,7 +18,8 @@ resource "proxmox_virtual_environment_container" "dns" {
   }
 
   network_interface {
-    name = "eth0"
+    name     = "eth0"
+    firewall = true
   }
 
   operating_system {
@@ -34,10 +35,15 @@ resource "proxmox_virtual_environment_container" "dns" {
         gateway = "192.168.100.1"
       }
     }
+    dns {
+      domain = "batko.me"
+      servers = [
+        "192.168.100.1"
+      ]
+    }
     user_account {
       keys = [
-        var.ansible_ssh_public_key,
-        var.michal_ssh_public_key
+        var.ansible_ssh_public_key
       ]
     }
   }
