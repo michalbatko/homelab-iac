@@ -18,7 +18,8 @@ resource "proxmox_virtual_environment_container" "dns" {
   }
 
   network_interface {
-    name = "eth0"
+    name     = "eth0"
+    firewall = true
   }
 
   operating_system {
@@ -33,6 +34,12 @@ resource "proxmox_virtual_environment_container" "dns" {
         address = "192.168.100.20/24"
         gateway = "192.168.100.1"
       }
+    }
+    dns {
+      domain = "batko.me"
+      servers = [
+        "192.168.100.1"
+      ]
     }
     user_account {
       keys = [
