@@ -79,3 +79,8 @@ jobs:
       working-directory: ./ansible
       env:
         ANSIBLE_HOST_KEY_CHECKING: "False"
+
+    - name: Cleanup SSH Key
+      if: always()
+      run: rm -rf ./id_ed25519
+      working-directory: ./ansible
