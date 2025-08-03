@@ -13,7 +13,7 @@ permissions:
 jobs:
   deploy-terraform:
     if: github.event.pull_request.merged == true
-    name: Deploy Changes
+    name: Deploy Terraform Changes
     runs-on: self-hosted
     environment: homelab
     env:
@@ -37,3 +37,24 @@ jobs:
     - name: Apply Terraform Plan
       run: terraform apply -auto-approve
       working-directory: ./terraform
+
+  deploy-ansible:
+    if: github.event.pull_request.merged == true
+    name: Deploy Ansible Changes
+    runs-on: self-hosted
+    environment: homelab
+    needs: deploy-terraform
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Prepare SSH key
+      run: |
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./id_ed25519
+        chmod 600 ./id_ed25519
+      working-directory: ./ansible
+
+    - name: Run Ansible Playbooks
+      run: ansible-playbook -i inventory/hosts.yml site.yml --diff --private-key ./id_ed25519
+      working-directory: ./ansible
