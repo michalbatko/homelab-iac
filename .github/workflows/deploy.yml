@@ -58,3 +58,5 @@ jobs:
     - name: Run Ansible Playbooks
       run: ansible-playbook -i inventory/hosts.yml site.yml --diff --private-key ./id_ed25519
       working-directory: ./ansible
+      env:
+        ANSIBLE_HOST_KEY_CHECKING: "False"
