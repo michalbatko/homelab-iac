@@ -51,7 +51,7 @@ jobs:
 
     - name: Prepare SSH key
       run: |
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./id_ed25519
+        echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ./id_ed25519
         chmod 600 ./id_ed25519
       working-directory: ./ansible
 
