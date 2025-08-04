@@ -1,5 +1,5 @@
 resource "proxmox_virtual_environment_container" "dns" {
-  description = "AdGuard Home DNS"
+  description = "Bind9"
   node_name   = "infra"
   vm_id       = 100
 
@@ -36,7 +36,7 @@ resource "proxmox_virtual_environment_container" "dns" {
       }
     }
     dns {
-      domain = "batko.me"
+      domain = "home.batko.me"
       servers = [
         "192.168.100.1"
       ]

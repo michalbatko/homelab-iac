@@ -1,0 +1,15 @@
+$TTL    86400
+@       IN      SOA     dns.{{ dns_domain }}. admin.{{ dns_domain }}. (
+                        {{ ansible_date_time.epoch }} ; Serial
+                        3600       ; Refresh
+                        1800       ; Retry
+                        604800     ; Expire
+                        86400 )    ; Negative Cache TTL
+
+@       IN      NS      dns.{{ dns_domain }}.
+
+dns     IN      A       192.168.100.20
+
+{% for record in dns_records %}
+{{ record.name }}    IN      A       {{ record.ip }}
+{% endfor %}

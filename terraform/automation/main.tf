@@ -1,5 +1,5 @@
 resource "proxmox_virtual_environment_container" "automation" {
-  description = "Ansible and GitHub Actions Runner and Terraform"
+  description = "Ansible, GitHub Actions Runner, Terraform"
   node_name   = "infra"
   vm_id       = 101
 
@@ -36,7 +36,7 @@ resource "proxmox_virtual_environment_container" "automation" {
       }
     }
     dns {
-      domain = "batko.me"
+      domain = "home.batko.me"
       servers = [
         "192.168.100.1"
       ]
