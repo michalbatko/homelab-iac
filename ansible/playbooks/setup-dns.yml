@@ -1,0 +1,6 @@
+- name: Setup DNS server
+  hosts: dns.home.batko.me
+  become: yes
+  gather_facts: true
+  roles:
+    - dns

@@ -1,0 +1,6 @@
+dns_domain: "home.batko.me"
+dns_records:
+  - name: dns
+    ip: 192.168.100.20
+  - name: automation
+    ip: 192.168.100.21
