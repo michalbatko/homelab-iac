@@ -1,5 +1,11 @@
 dns_domain: "home.batko.me"
 dns_records:
+  - name: router
+    ip: 192.168.100.1
+  - name: infra
+    ip: 192.168.100.5
+  - name: printer
+    ip: 192.168.100.10
   - name: dns
     ip: 192.168.100.20
   - name: automation
