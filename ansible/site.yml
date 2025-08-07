@@ -1,1 +1,2 @@
+- import_playbook: playbooks/setup-automation.yml
 - import_playbook: playbooks/setup-dns.yml

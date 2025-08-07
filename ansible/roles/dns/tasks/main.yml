@@ -1,6 +1,8 @@
-- name: Install Bind9
+- name: Install required packages
   apt:
-    name: bind9
+    name:
+      - sudo
+      - bind9
     state: present
     update_cache: yes
 

@@ -1,0 +1,15 @@
+- name: Install required packages
+  apt:
+    name:
+      - sudo
+      - curl
+      - git
+      - unzip
+      - software-properties-common
+      - gnupg
+      - terraform
+      - ansible
+      - nodejs
+      - npm
+    state: present
+    update_cache: yes
