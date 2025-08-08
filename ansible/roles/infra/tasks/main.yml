@@ -1,0 +1,6 @@
+- name: Install required packages
+  apt:
+    name:
+      - sudo
+    state: present
+    update_cache: yes
