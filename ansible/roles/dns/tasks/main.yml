@@ -2,6 +2,8 @@
   apt:
     name:
       - sudo
+      - unattended-upgrades
+      - apt-listchanges
       - bind9
     state: present
     update_cache: yes
