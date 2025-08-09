@@ -2,5 +2,7 @@
   apt:
     name:
       - sudo
+      - unattended-upgrades
+      - apt-listchanges
     state: present
     update_cache: yes

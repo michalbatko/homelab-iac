@@ -2,9 +2,11 @@
   apt:
     name:
       - sudo
+      - unattended-upgrades
+      - apt-listchanges
       - curl
-      - git
       - unzip
+      - git
       - software-properties-common
       - gnupg
       - terraform
