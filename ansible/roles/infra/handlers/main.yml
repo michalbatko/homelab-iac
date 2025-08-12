@@ -1,9 +1,3 @@
-- name: Restart bind9
-  service:
-    name: bind9
-    state: restarted
-  when: not ansible_check_mode
-
 - name: Restart unattended-upgrades
   service:
     name: unattended-upgrades
