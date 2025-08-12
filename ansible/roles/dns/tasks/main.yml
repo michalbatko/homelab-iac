@@ -15,6 +15,7 @@
     owner: root
     group: root
     mode: '0644'
+  notify: Restart unattended-upgrades
 
 - name: Prepare zone files directory
   file:
@@ -31,7 +32,7 @@
     owner: root
     group: root
     mode: '0644'
-  notify: Restart Bind9
+  notify: Restart bind9
 
 - name: Copy zone file
   template:
@@ -40,4 +41,4 @@
     owner: root
     group: bind
     mode: '0644'
-  notify: Restart Bind9
+  notify: Restart bind9
