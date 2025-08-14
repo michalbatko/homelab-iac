@@ -68,17 +68,9 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Prepare SSH key
-      run: |
-        echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ./id_ed25519
-        chmod 600 ./id_ed25519
-      working-directory: ./ansible
-
     - name: Run Ansible Playbooks in Check Mode
-      run: ansible-playbook site.yml --check --diff --private-key ./id_ed25519
-      working-directory: ./ansible
-
-    - name: Cleanup SSH Key
-      if: always()
-      run: rm -rf ./id_ed25519
+      run: |
+        eval "$(ssh-agent -s)"
+        echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" | ssh-add -
+        ansible-playbook site.yml --check --diff
       working-directory: ./ansible
