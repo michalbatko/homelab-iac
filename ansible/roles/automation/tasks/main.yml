@@ -26,3 +26,12 @@
     group: root
     mode: '0644'
   notify: Restart unattended-upgrades
+
+- name: Create Cloudflare credentials file for Certbot
+  copy:
+    dest: /etc/letsencrypt/cloudflare.ini
+    content: dns_cloudflare_api_token = {{ cloudflare_api_token }}
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
