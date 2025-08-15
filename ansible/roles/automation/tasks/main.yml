@@ -13,6 +13,8 @@
       - ansible
       - nodejs
       - npm
+      - certbot
+      - python3-certbot-dns-cloudflare
     state: present
     update_cache: yes
 
