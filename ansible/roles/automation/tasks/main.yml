@@ -15,17 +15,10 @@
       - npm
       - certbot
       - python3-certbot-dns-cloudflare
-      - python3-pip
+      - python3-requests
+      - python3-urllib3
     state: present
     update_cache: yes
-
-- name: Install required Python packages for Ansible
-  pip:
-    name:
-      - requests
-      - urllib3
-    state: present
-  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Copy 50unattended-upgrades file
   template:
