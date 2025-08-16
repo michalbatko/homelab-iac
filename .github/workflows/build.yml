@@ -76,5 +76,6 @@ jobs:
         eval "$(ssh-agent -s)"
         echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" | ssh-add -
         ansible-playbook site.yml --check --diff \
-          -e cloudflare_api_token="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          -e cloudflare_api_token="${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+          -e proxmox_api_token="${{ secrets.PROXMOX_VE_API_TOKEN }}"
       working-directory: ./ansible
