@@ -66,6 +66,18 @@
     state: directory
     mode: '0755'
 
+- name: Create scripts directory for certificate deployment
+  file:
+    path: /etc/letsencrypt/scripts
+    state: directory
+    mode: '0755'
+
+- name: Copy certificate deployment playbook
+  copy:
+    src: "{{ playbook_dir }}/deploy-proxmox-certificate.yml"
+    dest: /etc/letsencrypt/scripts/deploy-proxmox-certificate.yml
+    mode: '0644'
+
 - name: Check if certificate already exists
   stat:
     path: /etc/letsencrypt/live/infra.home.batko.me/fullchain.pem

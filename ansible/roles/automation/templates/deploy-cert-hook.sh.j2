@@ -12,5 +12,4 @@ echo "Certificate for infra.home.batko.me renewed at $(date)" >> /var/log/letsen
 PROXMOX_API_TOKEN=$(cat /etc/letsencrypt/proxmox-api-token.ini)
 
 # Run the dedicated certificate deployment playbook
-cd {{ ansible_playbook_directory | dirname | dirname }}
-ansible-playbook playbooks/deploy-proxmox-certificate.yml -e proxmox_api_token="${PROXMOX_API_TOKEN}"
+ansible-playbook /etc/letsencrypt/scripts/deploy-proxmox-certificate.yml -e proxmox_api_token="${PROXMOX_API_TOKEN}"
