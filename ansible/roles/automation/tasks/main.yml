@@ -15,8 +15,16 @@
       - npm
       - certbot
       - python3-certbot-dns-cloudflare
+      - python3-pip
     state: present
     update_cache: yes
+
+- name: Install required Python packages for Ansible
+  pip:
+    name:
+      - requests
+      - urllib3
+    state: present
 
 - name: Copy 50unattended-upgrades file
   template:
@@ -35,3 +43,54 @@
     group: root
     mode: '0600'
   no_log: true
+
+- name: Create Proxmox API token file for certificate deployment
+  copy:
+    dest: /etc/letsencrypt/proxmox-api-token.ini
+    content: "{{ proxmox_api_token }}"
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+
+- name: Create logs directory for certificate deployment
+  file:
+    path: /var/log/letsencrypt
+    state: directory
+    mode: '0755'
+
+- name: Ensure letsencrypt directory exists
+  file:
+    path: /etc/letsencrypt
+    state: directory
+    mode: '0755'
+
+- name: Check if certificate already exists
+  stat:
+    path: /etc/letsencrypt/live/infra.home.batko.me/fullchain.pem
+  register: cert_file
+
+- name: Generate initial certificate for infra.home.batko.me
+  command: >
+    certbot certonly --dns-cloudflare --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini 
+    --non-interactive --agree-tos -m admin@batko.me 
+    -d infra.home.batko.me
+  when: not cert_file.stat.exists
+
+- name: Create certbot deploy hook directory
+  file:
+    path: /etc/letsencrypt/renewal-hooks/deploy
+    state: directory
+    mode: '0755'
+
+- name: Add certificate deployment script
+  template:
+    src: deploy-cert-hook.sh.j2
+    dest: /etc/letsencrypt/renewal-hooks/deploy/deploy-infra-cert.sh
+    mode: '0755'
+
+- name: Ensure certbot timer is enabled
+  systemd:
+    name: certbot.timer
+    enabled: yes
+    state: started

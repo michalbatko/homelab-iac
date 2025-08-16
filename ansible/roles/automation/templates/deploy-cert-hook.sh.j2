@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Only run for the specific domain we care about
+if [[ "$RENEWED_DOMAINS" != *"infra.home.batko.me"* ]]; then
+  exit 0
+fi
+
+# Log the renewal event
+echo "Certificate for infra.home.batko.me renewed at $(date)" >> /var/log/letsencrypt/cert-deployments.log
+
+# Load the Proxmox API token from file
+PROXMOX_API_TOKEN=$(cat /etc/letsencrypt/proxmox-api-token.ini)
+
+# Run the dedicated certificate deployment playbook
+cd {{ ansible_playbook_directory | dirname | dirname }}
+ansible-playbook playbooks/deploy-proxmox-certificate.yml -e proxmox_api_token="${PROXMOX_API_TOKEN}"

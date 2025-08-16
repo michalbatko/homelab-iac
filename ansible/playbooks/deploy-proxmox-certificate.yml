@@ -1,0 +1,58 @@
+---
+- name: Deploy certificate to Proxmox via API
+  hosts: localhost
+  gather_facts: false
+  vars:
+    proxmox_node: pve
+    proxmox_api_host: infra.home.batko.me
+    proxmox_token_parts: "{{ proxmox_api_token.split('=') }}"
+    proxmox_token_id: "{{ proxmox_token_parts[0] }}"
+    proxmox_token_secret: "{{ proxmox_token_parts[1] }}"
+    cert_path: "/etc/letsencrypt/live/infra.home.batko.me/cert.pem"
+    key_path: "/etc/letsencrypt/live/infra.home.batko.me/privkey.pem"
+    fullchain_path: "/etc/letsencrypt/live/infra.home.batko.me/fullchain.pem"
+
+  tasks:
+    - name: Read certificate files
+      slurp:
+        src: "{{ item.path }}"
+      register: cert_files
+      loop:
+        - { path: "{{ cert_path }}", var: "cert" }
+        - { path: "{{ key_path }}", var: "key" }
+        - { path: "{{ fullchain_path }}", var: "fullchain" }
+
+    - name: Set certificate content variables
+      set_fact:
+        cert_content: "{{ cert_files.results | selectattr('item.var', 'equalto', 'cert') | map(attribute='content') | first | b64decode }}"
+        key_content: "{{ cert_files.results | selectattr('item.var', 'equalto', 'key') | map(attribute='content') | first | b64decode }}"
+        fullchain_content: "{{ cert_files.results | selectattr('item.var', 'equalto', 'fullchain') | map(attribute='content') | first | b64decode }}"
+
+    - name: Upload certificate via Proxmox API
+      uri:
+        url: "https://{{ proxmox_api_host }}:8006/api2/json/nodes/{{ proxmox_node }}/certificates/custom"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          certificates: "{{ fullchain_content }}"
+          key: "{{ key_content }}"
+          restart: 1
+        headers:
+          Content-Type: "application/x-www-form-urlencoded"
+          Authorization: "PVEAPIToken={{ proxmox_token_id }}={{ proxmox_token_secret }}"
+        validate_certs: false
+        status_code: [200, 201, 202, 204]
+      register: upload_result
+
+    - name: Display result
+      debug:
+        var: upload_result
+        verbosity: 1
+
+    - name: Log certificate deployment
+      delegate_to: localhost
+      lineinfile:
+        path: /var/log/letsencrypt/cert-deployments.log
+        line: "Certificate deployed to Proxmox at {{ ansible_date_time.iso8601 }}"
+        create: yes
+        mode: '0644'
