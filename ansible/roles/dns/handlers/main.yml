@@ -2,10 +2,10 @@
   service:
     name: bind9
     state: restarted
-  when: not ansible_check_mode
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Restart unattended-upgrades
   service:
     name: unattended-upgrades
     state: restarted
-  when: not ansible_check_mode
+  ignore_errors: "{{ ansible_check_mode }}"

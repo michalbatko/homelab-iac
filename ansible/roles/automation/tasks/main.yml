@@ -25,6 +25,7 @@
       - requests
       - urllib3
     state: present
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Copy 50unattended-upgrades file
   template:
@@ -76,6 +77,7 @@
     --non-interactive --agree-tos -m admin@batko.me 
     -d infra.home.batko.me
   when: not cert_file.stat.exists
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Create certbot deploy hook directory
   file:
@@ -94,3 +96,4 @@
     name: certbot.timer
     enabled: yes
     state: started
+  ignore_errors: "{{ ansible_check_mode }}"
