@@ -13,6 +13,7 @@ jobs:
     name: Check Code Formatting
     runs-on: self-hosted
     environment: homelab
+    timeout-minutes: 5
 
     steps:
     - name: Checkout Repository
@@ -32,6 +33,7 @@ jobs:
     name: Verify Terraform Changes
     runs-on: self-hosted
     environment: homelab
+    timeout-minutes: 5
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
@@ -63,6 +65,7 @@ jobs:
     name: Verify Ansible Changes
     runs-on: self-hosted
     environment: homelab
+    timeout-minutes: 5
 
     steps:
     - name: Checkout Repository
