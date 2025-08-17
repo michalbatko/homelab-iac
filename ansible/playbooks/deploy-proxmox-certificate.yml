@@ -3,11 +3,8 @@
   hosts: localhost
   gather_facts: false
   vars:
-    proxmox_node: pve
+    proxmox_node: infra
     proxmox_api_host: infra.home.batko.me
-    proxmox_token_parts: "{{ proxmox_api_token.split('=') }}"
-    proxmox_token_id: "{{ proxmox_token_parts[0] }}"
-    proxmox_token_secret: "{{ proxmox_token_parts[1] }}"
     cert_path: "/etc/letsencrypt/live/infra.home.batko.me/cert.pem"
     key_path: "/etc/letsencrypt/live/infra.home.batko.me/privkey.pem"
     fullchain_path: "/etc/letsencrypt/live/infra.home.batko.me/fullchain.pem"
@@ -39,20 +36,6 @@
           restart: 1
         headers:
           Content-Type: "application/x-www-form-urlencoded"
-          Authorization: "PVEAPIToken={{ proxmox_token_id }}={{ proxmox_token_secret }}"
+          Authorization: "PVEAPIToken={{ proxmox_api_token }}"
         validate_certs: false
         status_code: [200, 201, 202, 204]
-      register: upload_result
-
-    - name: Display result
-      debug:
-        var: upload_result
-        verbosity: 1
-
-    - name: Log certificate deployment
-      delegate_to: localhost
-      lineinfile:
-        path: /var/log/letsencrypt/cert-deployments.log
-        line: "Certificate deployed to Proxmox at {{ ansible_date_time.iso8601 }}"
-        create: yes
-        mode: '0644'
