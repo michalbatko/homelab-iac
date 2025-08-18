@@ -1,7 +1,7 @@
 resource "proxmox_virtual_environment_container" "vault" {
   description = "HashiCorp Vault"
   node_name   = "infra"
-  vm_id       = 101
+  vm_id       = 102
 
   cpu {
     cores = 1
