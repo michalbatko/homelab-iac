@@ -9,3 +9,9 @@ module "dns" {
 
   ansible_ssh_public_key = local.ansible_ssh_public_key
 }
+
+module "vault" {
+  source = "./vault"
+
+  ansible_ssh_public_key = local.ansible_ssh_public_key
+}
