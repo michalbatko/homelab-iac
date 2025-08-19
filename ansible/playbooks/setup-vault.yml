@@ -1,0 +1,5 @@
+- name: Setup HashiCorp Vault server
+  hosts: vault.home.batko.me
+  become: yes
+  roles:
+    - vault

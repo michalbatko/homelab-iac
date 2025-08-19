@@ -1,3 +1,4 @@
 - import_playbook: playbooks/setup-automation.yml
 - import_playbook: playbooks/setup-dns.yml
 - import_playbook: playbooks/setup-infra.yml
+- import_playbook: playbooks/setup-vault.yml
