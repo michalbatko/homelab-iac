@@ -10,3 +10,5 @@ dns_records:
     ip: 192.168.100.20
   - name: automation
     ip: 192.168.100.21
+  - name: vault
+    ip: 192.168.100.22
