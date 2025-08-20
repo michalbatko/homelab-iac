@@ -14,6 +14,7 @@
     url: https://apt.releases.hashicorp.com/gpg
     keyring: /usr/share/keyrings/hashicorp-archive-keyring.gpg
     state: present
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Add HashiCorp repository
   apt_repository:
@@ -26,6 +27,7 @@
   apt:
     name: vault
     state: present
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Copy 50unattended-upgrades file
   template:
