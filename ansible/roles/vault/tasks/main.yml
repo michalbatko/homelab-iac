@@ -4,8 +4,28 @@
       - sudo
       - unattended-upgrades
       - apt-listchanges
+      - wget
+      - gpg
     state: present
     update_cache: yes
+
+- name: Add HashiCorp GPG key
+  apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    keyring: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    state: present
+
+- name: Add HashiCorp repository
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com bookworm main"
+    filename: hashicorp
+    state: present
+    update_cache: yes
+
+- name: Install HashiCorp Vault
+  apt:
+    name: vault
+    state: present
 
 - name: Copy 50unattended-upgrades file
   template:
