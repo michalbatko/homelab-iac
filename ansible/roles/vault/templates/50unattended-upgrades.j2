@@ -4,6 +4,7 @@ Unattended-Upgrade::Origins-Pattern {
         "origin=Debian,codename=${distro_codename},label=Debian";
         "origin=Debian,codename=${distro_codename},label=Debian-Security";
         "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+        "origin=Artifactory,codename=${distro_codename},label=Artifactory,component=main";
 };
 
 Unattended-Upgrade::Package-Blacklist {
