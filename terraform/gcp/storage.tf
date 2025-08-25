@@ -1,6 +1,6 @@
 resource "google_storage_bucket" "terraform_state" {
   name     = "homelab-iac-terraform-state"
-  location = "US"
+  location = "us-east1"
   project  = google_project.homelab_iac.project_id
 
   versioning {
