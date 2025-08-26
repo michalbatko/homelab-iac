@@ -1,5 +1,5 @@
 terraform {
   backend "gcs" {
-    bucket = "homelab-iac-terraform-state"
+    bucket = "homelab-iac-terraform-backend"
   }
 }
