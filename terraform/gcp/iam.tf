@@ -27,8 +27,8 @@ resource "google_project_iam_member" "terraform_roles" {
 
 resource "google_service_account" "vault" {
   project      = google_project.homelab_iac.project_id
-  account_id   = "vault"
-  display_name = "Vault"
+  account_id   = "hc-vault"
+  display_name = "HashiCorp Vault"
   description  = "Service account used by HashiCorp Vault to access backend on GCS storage"
 }
 
