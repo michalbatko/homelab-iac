@@ -62,5 +62,11 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     "attribute.repository" = "assertion.repository"
   }
 
-  attribute_condition = "attribute.repository == 'michalbatko/homelab-iac'"
+  attribute_condition = "attribute.repository == '${local.github_repository}'"
+}
+
+resource "google_service_account_iam_member" "terraform_workload_identity" {
+  service_account_id = google_service_account.terraform.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/projects/${google_project.homelab_iac.project_id}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.github.workload_identity_pool_id}/attribute.repository/${local.github_repository}"
 }
