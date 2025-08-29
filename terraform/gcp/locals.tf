@@ -4,4 +4,6 @@ locals {
     "iam.googleapis.com",
     "storage.googleapis.com"
   ])
+  
+  github_repository = "michalbatko/homelab-iac"
 }

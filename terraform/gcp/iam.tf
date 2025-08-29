@@ -62,5 +62,5 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     "attribute.repository" = "assertion.repository"
   }
 
-  attribute_condition = "attribute.repository == 'michalbatko/homelab-iac'"
+  attribute_condition = "attribute.repository == '${local.github_repository}'"
 }
