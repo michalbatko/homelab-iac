@@ -37,3 +37,8 @@ resource "google_storage_bucket_iam_member" "vault_roles" {
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.vault.email}"
 }
+
+resource "google_iam_workload_identity_pool" "github" {
+  project                   = google_project.homelab_iac.project_id
+  workload_identity_pool_id = "github"
+}
