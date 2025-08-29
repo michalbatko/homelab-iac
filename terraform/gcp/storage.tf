@@ -1,7 +1,6 @@
 resource "google_storage_bucket" "terraform_backend" {
   name     = "homelab-iac-terraform-backend"
   location = "us-east1"
-  project  = google_project.homelab_iac.project_id
 
   versioning {
     enabled = true
@@ -24,7 +23,6 @@ resource "google_storage_bucket" "terraform_backend" {
 resource "google_storage_bucket" "vault_backend" {
   name     = "homelab-iac-vault-backend"
   location = "us-east1"
-  project  = google_project.homelab_iac.project_id
 
   versioning {
     enabled = true

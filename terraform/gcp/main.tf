@@ -4,7 +4,6 @@ resource "google_project" "homelab_iac" {
 }
 
 resource "google_project_service" "required_apis" {
-  project = google_project.homelab_iac.project_id
   service = each.value
 
   for_each = toset([
