@@ -3,7 +3,8 @@ module "cloudflare" {
 }
 
 module "gcp" {
-  source = "./gcp"
+  source     = "./gcp"
+  project_id = local.gcp_project_id
 }
 
 module "proxmox" {
