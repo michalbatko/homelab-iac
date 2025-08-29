@@ -1,6 +1,7 @@
 resource "google_project_iam_member" "my_roles" {
-  role   = "roles/owner"
-  member = "user:mibatko@gmail.com"
+  project = google_project.homelab_iac.project_id
+  role    = "roles/owner"
+  member  = "user:mibatko@gmail.com"
 }
 
 resource "google_iam_workload_identity_pool" "github" {
@@ -34,8 +35,9 @@ resource "google_service_account" "terraform" {
 }
 
 resource "google_project_iam_member" "terraform_roles" {
-  role   = each.value
-  member = "serviceAccount:${google_service_account.terraform.email}"
+  project = google_project.homelab_iac.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.terraform.email}"
 
   for_each = toset([
     "roles/iam.securityAdmin",
