@@ -20,6 +20,7 @@ resource "google_project_iam_member" "terraform_roles" {
     "roles/iam.securityAdmin",
     "roles/iam.serviceAccountAdmin",
     "roles/iam.serviceAccountKeyAdmin",
+    "roles/iam.workloadIdentityPoolAdmin",
     "roles/serviceusage.serviceUsageAdmin",
     "roles/storage.admin"
   ])
