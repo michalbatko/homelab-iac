@@ -19,7 +19,7 @@ provider "cloudflare" {
 }
 
 provider "google" {
-  project = google_project.homelab_iac.project_id
+  project = local.gcp_project_id
 }
 
 provider "proxmox" {

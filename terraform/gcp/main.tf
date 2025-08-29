@@ -1,6 +1,6 @@
 resource "google_project" "homelab_iac" {
-  name       = "homelab-iac"
-  project_id = "homelab-iac"
+  name       = var.project_id
+  project_id = var.project_id
 }
 
 resource "google_project_service" "required_apis" {
