@@ -29,6 +29,23 @@
     state: present
   ignore_errors: "{{ ansible_check_mode }}"
 
+- name: Create Vault configuration directory
+  file:
+    path: /etc/vault.d
+    state: directory
+    owner: vault
+    group: vault
+    mode: '0755'
+
+- name: Create Vault configuration file
+  template:
+    src: vault.hcl.j2
+    dest: /etc/vault.d/vault.hcl
+    owner: vault
+    group: vault
+    mode: '0640'
+  notify: Restart vault
+
 - name: Copy 50unattended-upgrades file
   template:
     src: 50unattended-upgrades.j2
