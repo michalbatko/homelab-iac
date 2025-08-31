@@ -3,3 +3,10 @@
     name: unattended-upgrades
     state: restarted
   ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Restart vault
+  service:
+    name: vault
+    state: restarted
+    enabled: yes
+  ignore_errors: "{{ ansible_check_mode }}"
