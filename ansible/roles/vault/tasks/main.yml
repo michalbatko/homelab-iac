@@ -46,6 +46,15 @@
     mode: '0640'
   notify: Restart vault
 
+- name: Create Google credentials file for Vault
+  copy:
+    dest: /etc/vault.d/vault_service_account_key.json
+    content: "{{ vault_service_account_key }}"
+    owner: vault
+    group: vault
+    mode: '0600'
+  no_log: true
+
 - name: Copy 50unattended-upgrades file
   template:
     src: 50unattended-upgrades.j2
