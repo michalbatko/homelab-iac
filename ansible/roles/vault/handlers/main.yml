@@ -10,3 +10,8 @@
     state: restarted
     enabled: yes
   ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  ignore_errors: "{{ ansible_check_mode }}"
