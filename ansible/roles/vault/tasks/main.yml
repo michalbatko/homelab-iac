@@ -55,6 +55,27 @@
     mode: '0600'
   no_log: true
 
+- name: Create systemd override directory for vault service
+  file:
+    path: /etc/systemd/system/vault.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Set GOOGLE_APPLICATION_CREDENTIALS in vault systemd service
+  copy:
+    content: |
+      [Service]
+      Environment=GOOGLE_APPLICATION_CREDENTIALS=/etc/vault.d/vault_service_account_key.json
+    dest: /etc/systemd/system/vault.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload systemd
+    - Restart vault
+
 - name: Copy 50unattended-upgrades file
   template:
     src: 50unattended-upgrades.j2
