@@ -49,7 +49,7 @@
 - name: Create Google credentials file for Vault
   copy:
     dest: /etc/vault.d/vault_service_account_key.json
-    content: "{{ vault_service_account_key }}"
+    content: "{{ vault_service_account_key | b64decode }}"
     owner: vault
     group: vault
     mode: '0600'
