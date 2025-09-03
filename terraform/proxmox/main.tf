@@ -10,6 +10,12 @@ module "dns" {
   ansible_ssh_public_key = local.ansible_ssh_public_key
 }
 
+module "proxy" {
+  source = "./proxy"
+
+  ansible_ssh_public_key = local.ansible_ssh_public_key
+}
+
 module "vault" {
   source = "./vault"
 
