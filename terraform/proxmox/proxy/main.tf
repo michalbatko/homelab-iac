@@ -28,7 +28,7 @@ resource "proxmox_virtual_environment_container" "proxy" {
   }
 
   initialization {
-    hostname = "vault"
+    hostname = "proxy"
     ip_config {
       ipv4 {
         address = "192.168.100.23/24"
