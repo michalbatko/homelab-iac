@@ -1,0 +1,5 @@
+- name: Setup proxy server
+  hosts: proxy.home.batko.me
+  become: yes
+  roles:
+    - proxy
