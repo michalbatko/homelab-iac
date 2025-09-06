@@ -1,3 +1,5 @@
+unattended_upgrades_reboot_time: "03:00"
+
 dns_domain: "home.batko.me"
 dns_records:
   - name: router

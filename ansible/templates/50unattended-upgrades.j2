@@ -4,6 +4,11 @@ Unattended-Upgrade::Origins-Pattern {
         "origin=Debian,codename=${distro_codename},label=Debian";
         "origin=Debian,codename=${distro_codename},label=Debian-Security";
         "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+{% if unattended_upgrades_additional_origins is defined %}
+{% for origin in unattended_upgrades_additional_origins %}
+        "{{ origin }}";
+{% endfor %}
+{% endif %}
 };
 
 Unattended-Upgrade::Package-Blacklist {
@@ -12,15 +17,15 @@ Unattended-Upgrade::Package-Blacklist {
 Unattended-Upgrade::AutoFixInterruptedDpkg "true";
 Unattended-Upgrade::MinimalSteps "false";
 Unattended-Upgrade::InstallOnShutdown "false";
-//Unattended-Upgrade::Mail "";
-//Unattended-Upgrade::MailReport "on-change";
+// Unattended-Upgrade::Mail "";
+// Unattended-Upgrade::MailReport "on-change";
 Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
 Unattended-Upgrade::Remove-New-Unused-Dependencies "true";
 Unattended-Upgrade::Remove-Unused-Dependencies "true";
 Unattended-Upgrade::Automatic-Reboot "true";
 Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
-Unattended-Upgrade::Automatic-Reboot-Time "04:00";
-//Acquire::http::Dl-Limit "70";
+Unattended-Upgrade::Automatic-Reboot-Time "{{ unattended_upgrades_reboot_time | default('04:00') }}";
+// Acquire::http::Dl-Limit "70";
 // Unattended-Upgrade::SyslogEnable "false";
 // Unattended-Upgrade::SyslogFacility "daemon";
 // Unattended-Upgrade::OnlyOnACPower "true";
