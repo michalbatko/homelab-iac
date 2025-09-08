@@ -4,6 +4,7 @@
       - sudo
       - unattended-upgrades
       - apt-listchanges
+      - nginx
     state: present
     update_cache: yes
 
