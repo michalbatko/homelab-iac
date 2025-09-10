@@ -1,5 +1,7 @@
-- name: Setup DNS server
-  hosts: dns.home.batko.me
+- name: Setup DNS servers
+  hosts: 
+    - dns.home.batko.me
+    - dns02.home.batko.me
   become: yes
   roles:
     - dns
