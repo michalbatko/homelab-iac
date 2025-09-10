@@ -16,4 +16,6 @@ dns_records:
     ip: 192.168.100.22
   - name: proxy
     ip: 192.168.100.23
-dns_serial: "2025090801"
+  - name: dns02
+    ip: 192.168.100.24
+dns_serial: "2025091001"
