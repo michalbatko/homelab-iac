@@ -39,7 +39,7 @@ resource "proxmox_virtual_environment_container" "automation" {
       domain = "home.batko.me"
       servers = [
         "192.168.100.20",
-        "192.168.100.24"
+        "1.1.1.1"
       ]
     }
     user_account {
