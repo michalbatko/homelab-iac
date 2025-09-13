@@ -34,6 +34,15 @@
     mode: '0644'
   notify: Restart bind9
 
+- name: Copy named.conf.options
+  template:
+    src: named.conf.options.j2
+    dest: /etc/bind/named.conf.options
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart bind9
+
 - name: Copy zone file
   template:
     src: db.home.batko.me.j2
