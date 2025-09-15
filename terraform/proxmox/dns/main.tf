@@ -1,4 +1,4 @@
-resource "proxmox_virtual_environment_container" "dns" {
+resource "proxmox_virtual_environment_container" "dns01" {
   description = "Bind9"
   node_name   = "infra"
   vm_id       = 100
@@ -28,7 +28,7 @@ resource "proxmox_virtual_environment_container" "dns" {
   }
 
   initialization {
-    hostname = "dns"
+    hostname = "dns01"
     ip_config {
       ipv4 {
         address = "192.168.100.20/24"
