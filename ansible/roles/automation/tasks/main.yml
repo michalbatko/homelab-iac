@@ -9,7 +9,6 @@
       - git
       - software-properties-common
       - gnupg
-      - terraform
       - ansible
       - nodejs
       - npm
@@ -19,6 +18,26 @@
       - python3-urllib3
     state: present
     update_cache: yes
+
+- name: Add HashiCorp GPG key
+  apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    keyring: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    state: present
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Add HashiCorp repository
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com bookworm main"
+    filename: hashicorp
+    state: present
+    update_cache: yes
+
+- name: Install Terraform
+  apt:
+    name: terraform
+    state: present
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Copy 50unattended-upgrades file
   template:
