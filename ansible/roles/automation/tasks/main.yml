@@ -4,11 +4,10 @@
       - sudo
       - unattended-upgrades
       - apt-listchanges
-      - curl
-      - unzip
-      - git
-      - software-properties-common
+      - wget
+      - gpg
       - gnupg
+      - software-properties-common
       - ansible
       - nodejs
       - npm
