@@ -47,6 +47,15 @@
     mode: '0644'
   notify: Restart unattended-upgrades
 
+- name: Create actions-runner user account
+  user:
+    name: actions-runner
+    home: /opt/actions-runner
+    create_home: yes
+    shell: /bin/bash
+    system: yes
+    state: present
+
 - name: Create Cloudflare credentials file for Certbot
   copy:
     dest: /etc/letsencrypt/cloudflare.ini
