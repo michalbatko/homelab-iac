@@ -72,6 +72,7 @@
     group: actions-runner
     remote_src: yes
     creates: /opt/actions-runner/run.sh
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Create Cloudflare credentials file for Certbot
   copy:
