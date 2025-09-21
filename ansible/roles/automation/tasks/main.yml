@@ -56,6 +56,23 @@
     system: yes
     state: present
 
+- name: Download GitHub Actions runner package
+  get_url:
+    url: https://github.com/actions/runner/releases/download/v2.328.0/actions-runner-linux-x64-2.328.0.tar.gz
+    dest: /opt/actions-runner/actions-runner-linux-x64-2.328.0.tar.gz
+    owner: actions-runner
+    group: actions-runner
+    mode: '0644'
+
+- name: Unpack GitHub Actions runner package
+  unarchive:
+    src: /opt/actions-runner/actions-runner-linux-x64-2.328.0.tar.gz
+    dest: /opt/actions-runner
+    owner: actions-runner
+    group: actions-runner
+    remote_src: yes
+    creates: /opt/actions-runner/run.sh
+
 - name: Create Cloudflare credentials file for Certbot
   copy:
     dest: /etc/letsencrypt/cloudflare.ini
