@@ -22,4 +22,4 @@ decided to repurpose it as a home server and a playground to learn DevOps tools 
 - 15 USD per year for `batko.me` domain
 - 10 USD per month for Copilot Pro
 - 0.000399 PLN in GCP charges due to a misunderstanding of free tier limits
-- A few hours of free time per day (non-refundable)
+- About an hour of free time per day (non-refundable)
