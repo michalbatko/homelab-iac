@@ -74,6 +74,47 @@
     creates: /opt/actions-runner/run.sh
   ignore_errors: "{{ ansible_check_mode }}"
 
+- name: Generate GitHub runner registration token
+  uri:
+    url: "https://api.github.com/repos/michalbatko/homelab-iac/actions/runners/registration-token"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ actions_access_token }}"
+      Accept: "application/vnd.github.v3+json"
+    status_code: 201
+  register: runner_token_response
+  no_log: true
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Configure GitHub Actions runner
+  command: >
+    ./config.sh 
+    --url https://github.com/michalbatko/homelab-iac 
+    --token {{ runner_token_response.json.token }}
+    --name {{ inventory_hostname }}
+    --unattended
+  args:
+    chdir: /opt/actions-runner
+    creates: /opt/actions-runner/.runner
+  become_user: actions-runner
+  no_log: true
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Install GitHub Actions runner service
+  command: ./svc.sh install actions-runner
+  args:
+    chdir: /opt/actions-runner
+    creates: /etc/systemd/system/actions.runner.*.service
+  become: yes
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Start and enable GitHub Actions runner service
+  command: ./svc.sh start
+  args:
+    chdir: /opt/actions-runner
+  become: yes
+  ignore_errors: "{{ ansible_check_mode }}"
+
 - name: Create Cloudflare credentials file for Certbot
   copy:
     dest: /etc/letsencrypt/cloudflare.ini
