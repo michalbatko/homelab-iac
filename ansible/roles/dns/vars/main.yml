@@ -12,15 +12,13 @@ dns_records:
     ip: 192.168.100.20
   - name: automation
     ip: 192.168.100.21
-  - name: vault
-    ip: 192.168.100.22
   - name: automation02
     ip: 192.168.100.23
   - name: dns02
     ip: 192.168.100.24
   - name: proxy01
     ip: 192.168.100.26
-dns_serial: "2025091801"
+dns_serial: "2025092501"
 
 default_forwarders:
   - "1.1.1.1"
