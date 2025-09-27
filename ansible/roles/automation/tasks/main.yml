@@ -64,6 +64,7 @@
     owner: actions-runner
     group: actions-runner
     mode: '0644'
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Unpack GitHub Actions runner package
   unarchive:
