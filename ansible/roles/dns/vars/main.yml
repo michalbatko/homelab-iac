@@ -10,15 +10,15 @@ dns_records:
     ip: 192.168.100.10
   - name: dns01
     ip: 192.168.100.20
+  - name: dns02
+    ip: 192.168.100.21
   - name: automation01
     ip: 192.168.100.22
   - name: automation02
     ip: 192.168.100.23
-  - name: dns02
-    ip: 192.168.100.24
   - name: proxy01
     ip: 192.168.100.26
-dns_serial: "2025092601"
+dns_serial: "2025092801"
 
 default_forwarders:
   - "1.1.1.1"
