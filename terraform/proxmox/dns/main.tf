@@ -38,8 +38,8 @@ resource "proxmox_virtual_environment_container" "dns01" {
     dns {
       domain = "home.batko.me"
       servers = [
-        "192.168.100.20",
-        "192.168.100.24"
+        "192.168.100.21",
+        "192.168.100.20"
       ]
     }
     user_account {
