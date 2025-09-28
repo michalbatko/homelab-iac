@@ -61,7 +61,7 @@ resource "proxmox_virtual_environment_container" "dns01" {
 resource "proxmox_virtual_environment_container" "dns02" {
   description = "Bind9"
   node_name   = "infra"
-  vm_id       = 104
+  vm_id       = 101
 
   cpu {
     cores = 1
@@ -91,15 +91,15 @@ resource "proxmox_virtual_environment_container" "dns02" {
     hostname = "dns02"
     ip_config {
       ipv4 {
-        address = "192.168.100.24/24"
+        address = "192.168.100.21/24"
         gateway = "192.168.100.1"
       }
     }
     dns {
       domain = "home.batko.me"
       servers = [
-        "192.168.100.24",
-        "192.168.100.20"
+        "192.168.100.20",
+        "192.168.100.21"
       ]
     }
     user_account {
@@ -117,4 +117,3 @@ resource "proxmox_virtual_environment_container" "dns02" {
 
   tags = []
 }
-
