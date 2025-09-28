@@ -10,8 +10,6 @@ dns_records:
     ip: 192.168.100.10
   - name: dns01
     ip: 192.168.100.20
-  - name: automation
-    ip: 192.168.100.21
   - name: automation01
     ip: 192.168.100.22
   - name: automation02
