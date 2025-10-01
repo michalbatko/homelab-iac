@@ -3,3 +3,9 @@
     name: unattended-upgrades
     state: restarted
   ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Restart nginx
+  service:
+    name: nginx
+    state: restarted
+  ignore_errors: "{{ ansible_check_mode }}"
