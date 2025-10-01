@@ -16,3 +16,25 @@
     group: root
     mode: '0644'
   notify: Restart unattended-upgrades
+
+- name: Remove default nginx site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Restart nginx
+
+- name: Create nginx proxy configuration
+  template:
+    src: proxy.conf.j2
+    dest: /etc/nginx/sites-available/proxy.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart nginx
+
+- name: Enable proxy site
+  file:
+    src: /etc/nginx/sites-available/proxy.conf
+    dest: /etc/nginx/sites-enabled/proxy.conf
+    state: link
+  notify: Restart nginx
