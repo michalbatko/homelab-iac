@@ -38,3 +38,4 @@
     dest: /etc/nginx/sites-enabled/proxy.conf
     state: link
   notify: Restart nginx
+  ignore_errors: "{{ ansible_check_mode }}"
