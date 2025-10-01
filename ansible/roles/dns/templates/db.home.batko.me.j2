@@ -11,5 +11,9 @@ $TTL    86400
 dns     IN      A       192.168.100.20
 
 {% for record in dns_records %}
+{% if record.ip is defined %}
 {{ record.name }}    IN      A       {{ record.ip }}
+{% elif record.cname is defined %}
+{{ record.name }}    IN      CNAME   {{ record.cname }}
+{% endif %}
 {% endfor %}
