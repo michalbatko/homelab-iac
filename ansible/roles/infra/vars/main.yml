@@ -1,3 +1,3 @@
 unattended_upgrades_additional_origins:
   - "origin=Proxmox,codename=${distro_codename},label=Proxmox Debian Repository,component=pve-no-subscription"
-unattended_upgrades_reboot_time: "02:00"
+unattended_upgrades_reboot_time: "04:15"
