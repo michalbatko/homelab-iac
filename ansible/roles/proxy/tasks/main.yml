@@ -8,7 +8,7 @@
     state: present
     update_cache: yes
 
-- name: Set timezone to Europe/Warsaw
+- name: Set server timezone
   timezone:
     name: Europe/Warsaw
 
