@@ -9,6 +9,10 @@
     state: present
     update_cache: yes
 
+- name: Set server timezone
+  timezone:
+    name: Europe/Warsaw
+
 - name: Copy 50unattended-upgrades file
   template:
     src: ../../templates/50unattended-upgrades.j2
