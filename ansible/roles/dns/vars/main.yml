@@ -1,4 +1,4 @@
-unattended_upgrades_reboot_time: "03:00"
+unattended_upgrades_reboot_time: "04:30"
 
 dns_domain: "home.batko.me"
 dns_records:
