@@ -3,11 +3,11 @@
   hosts: localhost
   gather_facts: false
   vars:
-    proxmox_node: infra
-    proxmox_api_host: infra.home.batko.me
-    cert_path: "/etc/letsencrypt/live/infra.home.batko.me/cert.pem"
-    key_path: "/etc/letsencrypt/live/infra.home.batko.me/privkey.pem"
-    fullchain_path: "/etc/letsencrypt/live/infra.home.batko.me/fullchain.pem"
+    proxmox_node: infra01
+    proxmox_api_host: infra01.home.batko.me
+    cert_path: "/etc/letsencrypt/live/infra01.home.batko.me/cert.pem"
+    key_path: "/etc/letsencrypt/live/infra01.home.batko.me/privkey.pem"
+    fullchain_path: "/etc/letsencrypt/live/infra01.home.batko.me/fullchain.pem"
 
   tasks:
     - name: Read certificate files
