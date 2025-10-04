@@ -1,5 +1,5 @@
 - name: Setup Proxmox host server
-  hosts: infra.home.batko.me
+  hosts: infra01.home.batko.me
   become: yes
   roles:
     - infra

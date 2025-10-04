@@ -2,7 +2,7 @@
 
 echo "Certificate renewal hook triggered at $(date) for domains: $RENEWED_DOMAINS" >> /var/log/letsencrypt/cert-deployments.log
 
-if [[ "$RENEWED_DOMAINS" == *"infra.home.batko.me"* ]]; then
+if [[ "$RENEWED_DOMAINS" == *"infra01.home.batko.me"* ]]; then
   PROXMOX_API_TOKEN=$(cat /etc/letsencrypt/proxmox-api-token.ini)
   echo "Running Proxmox certificate deployment via Ansible at $(date)" >> /var/log/letsencrypt/cert-deployments.log
   ansible-playbook /etc/letsencrypt/scripts/deploy-proxmox-certificate.yml -e proxmox_api_token="${PROXMOX_API_TOKEN}" >> /var/log/letsencrypt/cert-deployments.log 2>&1

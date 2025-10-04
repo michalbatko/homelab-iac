@@ -1,6 +1,6 @@
 resource "proxmox_virtual_environment_container" "dns01" {
   description = "Bind9"
-  node_name   = "infra"
+  node_name   = "infra01"
   vm_id       = 100
 
   cpu {
@@ -55,12 +55,19 @@ resource "proxmox_virtual_environment_container" "dns01" {
     nesting = true
   }
 
+  lifecycle {
+    ignore_changes = [
+      initialization,
+      operating_system
+    ]
+  }
+
   tags = []
 }
 
 resource "proxmox_virtual_environment_container" "dns02" {
   description = "Bind9"
-  node_name   = "infra"
+  node_name   = "infra01"
   vm_id       = 101
 
   cpu {
@@ -113,6 +120,13 @@ resource "proxmox_virtual_environment_container" "dns02" {
 
   features {
     nesting = true
+  }
+
+  lifecycle {
+    ignore_changes = [
+      initialization,
+      operating_system
+    ]
   }
 
   tags = []

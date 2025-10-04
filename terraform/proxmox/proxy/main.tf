@@ -1,6 +1,6 @@
 resource "proxmox_virtual_environment_container" "proxy01" {
   description = "Reverse Proxy and Cloudflare Tunnel"
-  node_name   = "infra"
+  node_name   = "infra01"
   vm_id       = 106
 
   cpu {

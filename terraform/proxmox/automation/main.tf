@@ -1,6 +1,6 @@
 resource "proxmox_virtual_environment_container" "automation01" {
   description = "Ansible, GitHub Actions Runner, Terraform"
-  node_name   = "infra"
+  node_name   = "infra01"
   vm_id       = 102
 
   cpu {
@@ -55,12 +55,19 @@ resource "proxmox_virtual_environment_container" "automation01" {
     nesting = true
   }
 
+  lifecycle {
+    ignore_changes = [
+      initialization,
+      operating_system
+    ]
+  }
+
   tags = []
 }
 
 resource "proxmox_virtual_environment_container" "automation02" {
   description = "Ansible, GitHub Actions Runner, Terraform"
-  node_name   = "infra"
+  node_name   = "infra01"
   vm_id       = 103
 
   cpu {
@@ -113,6 +120,13 @@ resource "proxmox_virtual_environment_container" "automation02" {
 
   features {
     nesting = true
+  }
+
+  lifecycle {
+    ignore_changes = [
+      initialization,
+      operating_system
+    ]
   }
 
   tags = []
