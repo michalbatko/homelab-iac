@@ -163,19 +163,6 @@
     dest: /etc/letsencrypt/scripts/deploy-proxmox-certificate.yml
     mode: '0644'
 
-- name: Check if certificate already exists
-  stat:
-    path: /etc/letsencrypt/live/infra01.home.batko.me/fullchain.pem
-  register: cert_file
-
-- name: Generate initial certificate for infra01.home.batko.me
-  command: >
-    certbot certonly --dns-cloudflare --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini
-    --non-interactive --agree-tos -m admin@batko.me
-    -d infra01.home.batko.me
-  when: not cert_file.stat.exists
-  ignore_errors: "{{ ansible_check_mode }}"
-
 - name: Create certbot deploy hook directory
   file:
     path: /etc/letsencrypt/renewal-hooks/deploy
@@ -187,6 +174,20 @@
     src: deploy-cert-hook.sh.j2
     dest: /etc/letsencrypt/renewal-hooks/deploy/deploy-infra01-cert.sh
     mode: '0755'
+
+- name: Check if certificate already exists
+  stat:
+    path: /etc/letsencrypt/live/infra01.home.batko.me/fullchain.pem
+  register: cert_file
+
+- name: Generate initial certificate for infra01.home.batko.me
+  command: >
+    certbot certonly --dns-cloudflare --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini
+    --non-interactive --agree-tos -m admin@batko.me
+    -d infra01.home.batko.me
+    --post-hook "/etc/letsencrypt/renewal-hooks/deploy/deploy-infra01-cert.sh"
+  when: not cert_file.stat.exists
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Ensure certbot timer is enabled
   systemd:
