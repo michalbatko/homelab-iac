@@ -55,13 +55,6 @@ resource "proxmox_virtual_environment_container" "automation01" {
     nesting = true
   }
 
-  lifecycle {
-    ignore_changes = [
-      initialization,
-      operating_system
-    ]
-  }
-
   tags = []
 }
 
