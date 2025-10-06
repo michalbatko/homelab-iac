@@ -185,7 +185,7 @@
     certbot certonly --dns-cloudflare --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini
     --non-interactive --agree-tos -m admin@batko.me
     -d infra01.home.batko.me
-    --post-hook "/etc/letsencrypt/renewal-hooks/deploy/deploy-infra01-cert.sh"
+    --deploy-hook "/etc/letsencrypt/renewal-hooks/deploy/deploy-infra01-cert.sh"
   when: not cert_file.stat.exists
   ignore_errors: "{{ ansible_check_mode }}"
 
