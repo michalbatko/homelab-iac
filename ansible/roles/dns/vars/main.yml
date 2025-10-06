@@ -6,8 +6,6 @@ dns_records:
     ip: 192.168.100.1
   - name: infra01
     ip: 192.168.100.5
-  - name: infra
-    cname: infra01.home.batko.me.
   - name: printer
     ip: 192.168.100.10
   - name: dns01
@@ -24,7 +22,7 @@ dns_records:
     ip: 192.168.100.26
   - name: vault
     cname: proxy01.home.batko.me.
-dns_serial: "2025100201"
+dns_serial: "2025100701"
 
 default_forwarders:
   - "1.1.1.1"
