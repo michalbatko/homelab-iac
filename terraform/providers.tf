@@ -24,5 +24,4 @@ provider "google" {
 
 provider "proxmox" {
   endpoint = local.proxmox_endpoint
-  insecure = true
 }
