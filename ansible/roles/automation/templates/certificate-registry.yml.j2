@@ -1,0 +1,22 @@
+# Certificate registry - services register their certificate requirements here
+certificates:
+  vault.home.batko.me:
+    domains:
+      - vault.home.batko.me
+    deployment_targets:
+      - type: nginx
+        hosts: {{ groups['proxy_hosts'] | to_json }}
+        service: nginx
+        config_path: /etc/nginx/sites-available/proxy.conf
+
+  infra.home.batko.me:
+    domains:
+      - infra.home.batko.me
+    deployment_targets:
+      - type: nginx
+        hosts: {{ groups['proxy_hosts'] | to_json }}
+        service: nginx
+        config_path: /etc/nginx/sites-available/proxy.conf
+      - type: proxmox_api
+        hosts: {{ groups['infra_hosts'] | to_json }}
+        api_endpoint: "https://{{ groups['infra_hosts'][0] }}:8006"
