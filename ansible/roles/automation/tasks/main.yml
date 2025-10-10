@@ -153,6 +153,12 @@
     state: directory
     mode: '0755'
 
+- name: Create certificate registry
+  template:
+    src: certificate-registry.yml.j2
+    dest: /etc/letsencrypt/certificate-registry.yml
+    mode: '0644'
+
 - name: Create scripts directory for certificate deployment
   file:
     path: /etc/letsencrypt/scripts

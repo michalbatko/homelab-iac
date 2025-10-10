@@ -1,0 +1,22 @@
+# Certificate registry - services register their certificate requirements here
+certificates:
+  vault.{{ dns_domain }}:
+    domains:
+      - vault.{{ dns_domain }}
+    deployment_targets:
+      - type: nginx
+        hosts: {{ groups['proxy'] | to_json }}
+        service: nginx
+        config_path: /etc/nginx/sites-available/proxy.conf
+
+  infra.{{ dns_domain }}:
+    domains:
+      - infra.{{ dns_domain }}
+    deployment_targets:
+      - type: nginx
+        hosts: {{ groups['proxy'] | to_json }}
+        service: nginx
+        config_path: /etc/nginx/sites-available/proxy.conf
+      - type: proxmox_api
+        hosts: {{ groups['infra'] | to_json }}
+        api_endpoint: "https://{{ groups['infra'][0] }}.{{ dns_domain }}:8006"
