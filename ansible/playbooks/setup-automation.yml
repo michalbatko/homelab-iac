@@ -1,7 +1,5 @@
 - name: Setup automation tools server
-  hosts: 
-    - automation01.home.batko.me
-    - automation02.home.batko.me
+  hosts: automation_hosts
   become: yes
   roles:
     - automation

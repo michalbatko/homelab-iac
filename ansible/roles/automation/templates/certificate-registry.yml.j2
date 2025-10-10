@@ -5,7 +5,7 @@ certificates:
       - vault.home.batko.me
     deployment_targets:
       - type: nginx
-        hosts: {{ groups['proxy'] | to_json }}
+        hosts: {{ groups['proxy_hosts'] | to_json }}
         service: nginx
         config_path: /etc/nginx/sites-available/proxy.conf
 
@@ -14,9 +14,9 @@ certificates:
       - infra.home.batko.me
     deployment_targets:
       - type: nginx
-        hosts: {{ groups['proxy'] | to_json }}
+        hosts: {{ groups['proxy_hosts'] | to_json }}
         service: nginx
         config_path: /etc/nginx/sites-available/proxy.conf
       - type: proxmox_api
-        hosts: {{ groups['infra'] | to_json }}
-        api_endpoint: "https://{{ groups['infra'][0] }}.home.batko.me:8006"
+        hosts: {{ groups['infra_hosts'] | to_json }}
+        api_endpoint: "https://{{ groups['infra_hosts'][0] }}:8006"
