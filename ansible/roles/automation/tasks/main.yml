@@ -159,6 +159,12 @@
     dest: /etc/letsencrypt/certificate-registry.yml
     mode: '0644'
 
+- name: Create certificate manager script
+  template:
+    src: certificate-manager.py.j2
+    dest: /usr/local/bin/certificate-manager
+    mode: '0755'
+
 - name: Create scripts directory for certificate deployment
   file:
     path: /etc/letsencrypt/scripts
