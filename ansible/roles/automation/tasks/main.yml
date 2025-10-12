@@ -123,7 +123,37 @@
   become: yes
   ignore_errors: "{{ ansible_check_mode }}"
 
-- name: Create Cloudflare credentials file for Certbot
+- name: Ensure letsencrypt directory exists
+  file:
+    path: /etc/letsencrypt
+    state: directory
+    mode: '0755'
+
+- name: Create certificate registry
+  template:
+    src: certificate-registry.yml.j2
+    dest: /etc/letsencrypt/certificate-registry.yml
+    mode: '0644'
+
+- name: Create logs directory for certificate management
+  file:
+    path: /var/log/letsencrypt
+    state: directory
+    mode: '0755'
+
+- name: Create certificate generator script
+  template:
+    src: generate-certificates.py.j2
+    dest: /usr/local/bin/generate-certificates
+    mode: '0755'
+
+- name: Create certificate deployer script
+  template:
+    src: deploy-certificates.py.j2
+    dest: /usr/local/bin/deploy-certificates
+    mode: '0755'
+
+- name: Create Cloudflare credentials file for certificate generation
   copy:
     dest: /etc/letsencrypt/cloudflare.ini
     content: dns_cloudflare_api_token = {{ cloudflare_api_token }}
@@ -141,41 +171,16 @@
     mode: '0600'
   no_log: true
 
-- name: Create logs directory for certificate deployment
-  file:
-    path: /var/log/letsencrypt
-    state: directory
-    mode: '0755'
+- name: Generate certificates using certificate generator
+  command: generate-certificates
+  register: certificate_manager_result
+  changed_when: "'[STATE_CHANGE]' in certificate_manager_result.stdout"
+  ignore_errors: "{{ ansible_check_mode }}"
 
-- name: Ensure letsencrypt directory exists
-  file:
-    path: /etc/letsencrypt
-    state: directory
-    mode: '0755'
-
-- name: Create certificate registry
-  template:
-    src: certificate-registry.yml.j2
-    dest: /etc/letsencrypt/certificate-registry.yml
-    mode: '0644'
-
-- name: Create certificate manager script
-  template:
-    src: certificate-manager.py.j2
-    dest: /usr/local/bin/certificate-manager
-    mode: '0755'
-
-- name: Create scripts directory for certificate deployment
-  file:
-    path: /etc/letsencrypt/scripts
-    state: directory
-    mode: '0755'
-
-- name: Copy certificate deployment playbook
-  copy:
-    src: "{{ playbook_dir }}/deploy-proxmox-certificate.yml"
-    dest: /etc/letsencrypt/scripts/deploy-proxmox-certificate.yml
-    mode: '0644'
+- name: Deploy certificates to target systems
+  command: deploy-certificates
+  when: certificate_manager_result is changed or force_deploy | default(false)
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Create certbot deploy hook directory
   file:
@@ -183,25 +188,11 @@
     state: directory
     mode: '0755'
 
-- name: Add certificate deployment script
+- name: Add certificate renewal hook for automatic deployments
   template:
     src: deploy-cert-hook.sh.j2
-    dest: /etc/letsencrypt/renewal-hooks/deploy/deploy-infra01-cert.sh
+    dest: /etc/letsencrypt/renewal-hooks/deploy/deploy-certificates-hook.sh
     mode: '0755'
-
-- name: Check if certificate already exists
-  stat:
-    path: /etc/letsencrypt/live/infra01.home.batko.me/fullchain.pem
-  register: cert_file
-
-- name: Generate initial certificate for infra01.home.batko.me
-  command: >
-    certbot certonly --dns-cloudflare --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini
-    --non-interactive --agree-tos -m admin@batko.me
-    -d infra01.home.batko.me
-    --deploy-hook "/etc/letsencrypt/renewal-hooks/deploy/deploy-infra01-cert.sh"
-  when: not cert_file.stat.exists
-  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Ensure certbot timer is enabled
   systemd:
