@@ -172,14 +172,14 @@
   no_log: true
 
 - name: Generate certificates using certificate generator
-  command: generate-certificates
-  register: certificate_manager_result
-  changed_when: "'[STATE_CHANGE]' in certificate_manager_result.stdout"
+  command: generate_certificates
+  register: generate_certificates_result
+  changed_when: "'[STATE_CHANGE]' in generate_certificates_result.stdout"
   ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Deploy certificates to target systems
   command: deploy-certificates
-  when: certificate_manager_result is changed or force_deploy | default(false)
+  when: generate_certificates_result is changed
   ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Create certbot deploy hook directory
