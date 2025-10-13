@@ -172,7 +172,7 @@
   no_log: true
 
 - name: Generate certificates using certificate generator
-  command: generate_certificates
+  command: generate-certificates
   register: generate_certificates_result
   changed_when: "'[STATE_CHANGE]' in generate_certificates_result.stdout"
   ignore_errors: "{{ ansible_check_mode }}"
