@@ -1,0 +1,9 @@
+---
+- name: Deploy certificate to nginx servers
+  hosts: localhost
+  gather_facts: false
+  
+  tasks:
+    - name: Placeholder task for nginx certificate deployment
+      debug:
+        msg: "TODO: Implement nginx certificate deployment"

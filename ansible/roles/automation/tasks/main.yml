@@ -159,6 +159,14 @@
     state: directory
     mode: '0755'
 
+- name: Copy certificate deployment playbooks
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/letsencrypt/deployment/{{ item | basename }}"
+    mode: '0644'
+  with_fileglob:
+    - "{{ playbook_dir }}/deploy-*-certificate.yml"
+
 - name: Create Cloudflare credentials file for certificate generation
   copy:
     dest: /etc/letsencrypt/cloudflare.ini
