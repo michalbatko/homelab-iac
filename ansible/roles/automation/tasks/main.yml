@@ -153,6 +153,12 @@
     dest: /usr/local/bin/deploy-certificates
     mode: '0755'
 
+- name: Create certificate deployment directory
+  file:
+    path: /etc/letsencrypt/deployment
+    state: directory
+    mode: '0755'
+
 - name: Create Cloudflare credentials file for certificate generation
   copy:
     dest: /etc/letsencrypt/cloudflare.ini
