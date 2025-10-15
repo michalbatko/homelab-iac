@@ -166,6 +166,7 @@
     mode: '0644'
   with_fileglob:
     - "{{ playbook_dir }}/deploy-*-certificate.yml"
+    - "{{ playbook_dir }}/sync-certificates.yml"
 
 - name: Create Cloudflare credentials file for certificate generation
   copy:
@@ -189,6 +190,11 @@
   command: generate-certificates
   register: generate_certificates_result
   changed_when: "'[STATE_CHANGE]' in generate_certificates_result.stdout"
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Sync certificates between automation hosts
+  command: ansible-playbook /etc/letsencrypt/deployment/sync-certificates.yml -i {{ playbook_dir }}/../hosts.yml
+  when: generate_certificates_result is changed
   ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Deploy certificates to target systems
