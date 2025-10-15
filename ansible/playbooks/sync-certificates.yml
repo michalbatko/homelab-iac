@@ -1,0 +1,94 @@
+- name: Synchronize certificates between automation hosts
+  hosts: automation_hosts
+  gather_facts: yes
+  become: yes
+  vars:
+    letsencrypt_dir: /etc/letsencrypt/live
+    
+  tasks:
+    - name: Find all certificate directories on each host
+      find:
+        paths: "{{ letsencrypt_dir }}"
+        file_type: directory
+      register: local_cert_dirs
+      
+    - name: Get certificate modification times
+      stat:
+        path: "{{ item.path }}/fullchain.pem"
+      register: local_cert_stats
+      loop: "{{ local_cert_dirs.files }}"
+      when: local_cert_dirs.files is defined
+      
+    - name: Create certificate inventory with timestamps
+      set_fact:
+        local_certificates: >-
+          {{
+            local_certificates | default([]) +
+            [{
+              'domain': item.item.path | basename,
+              'path': item.item.path,
+              'mtime': item.stat.mtime | default(0),
+              'exists': item.stat.exists | default(false),
+              'host': inventory_hostname
+            }]
+          }}
+      loop: "{{ local_cert_stats.results }}"
+      when: 
+        - local_cert_stats.results is defined
+        - item.stat is defined
+        
+    - name: Gather certificate info from all automation hosts
+      set_fact:
+        all_certificates: "{{ groups['automation_hosts'] | map('extract', hostvars, 'local_certificates') | list | flatten | default([]) }}"
+      run_once: true
+      
+    - name: Determine newest certificate for each domain
+      set_fact:
+        newest_certificates: >-
+          {{
+            newest_certificates | default({}) |
+            combine({
+              item.domain: all_certificates |
+              selectattr('domain', 'equalto', item.domain) |
+              selectattr('exists', 'equalto', true) |
+              sort(attribute='mtime', reverse=true) |
+              first
+            })
+          }}
+      loop: "{{ all_certificates }}"
+      when: 
+        - item.exists
+        - item.domain not in (newest_certificates | default({}))
+      run_once: true
+      
+    - name: Identify certificates to sync to this host
+      set_fact:
+        certificates_to_sync: >-
+          {{
+            newest_certificates.values() |
+            selectattr('host', 'ne', inventory_hostname) |
+            rejectattr('domain', 'in', (local_certificates | default([]) | selectattr('exists') | map(attribute='domain') | list)) |
+            list
+          }}
+      
+    - name: Create certificate directories for incoming certificates
+      file:
+        path: "{{ letsencrypt_dir }}/{{ item.domain }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop: "{{ certificates_to_sync }}"
+      
+    - name: Synchronize certificate files from source hosts
+      synchronize:
+        src: "{{ item.path }}/"
+        dest: "{{ letsencrypt_dir }}/{{ item.domain }}/"
+        delete: yes
+        recursive: yes
+        perms: yes
+        owner: yes
+        group: yes
+      delegate_to: "{{ item.host }}"
+      loop: "{{ certificates_to_sync }}"
+      when: certificates_to_sync | length > 0
