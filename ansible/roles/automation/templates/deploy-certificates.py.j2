@@ -26,13 +26,13 @@ class CertificateDeployer:
         try:
             with open(self.registry_path, 'r') as f:
                 registry = yaml.safe_load(f)
-                logger.info(f"Loaded certificate registry with {len(registry.get('certificates', {}))} domains")
+                logger.info(f"Loaded certificate registry containing {len(registry.get('certificates', {}))} definitions")
                 return registry
         except FileNotFoundError:
-            logger.error(f"Registry file not found: {self.registry_path}")
+            logger.error(f"Cannot open certificate registry '{self.registry_path}': No such file or directory")
             sys.exit(1)
         except yaml.YAMLError as e:
-            logger.error(f"Error parsing registry YAML: {e}")
+            logger.error(f"Cannot parse certificate registry: {e}")
             sys.exit(1)
     
     def deploy_certificate(self, domain_name):
