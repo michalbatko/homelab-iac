@@ -26,7 +26,7 @@ class CertificateGenerator:
         self.letsencrypt_dir = Path('/etc/letsencrypt/live')
         self.playbook_dir = Path('/etc/letsencrypt/deployment')
         self.inventory_path = '{{ playbook_dir }}/../hosts.yml'
-        
+    
     def _load_registry(self):
         try:
             with open(self.registry_path, 'r') as f:
@@ -39,7 +39,41 @@ class CertificateGenerator:
         except yaml.YAMLError as e:
             logger.error(f"Cannot parse certificate registry: {e}")
             sys.exit(1)
-    
+
+    def sync_certificates(self):
+        sync_playbook = self.playbook_dir / 'sync-certificates.yml'
+        
+        if not sync_playbook.exists():
+            logger.error(f"Cannot open synchronization playbook '{sync_playbook}': No such file or directory")
+            return False
+        
+        cmd = [
+            'ansible-playbook',
+            str(sync_playbook),
+            '-i', self.inventory_path,
+            '-e', 'ansible_ssh_common_args="-o StrictHostKeyChecking=no"'
+        ]
+        
+        logger.info("Synchronizing certificates between automation hosts")
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd='/etc/letsencrypt')
+            
+            if result.stdout:
+                logger.info(f"Synchronization playbook output:\n{result.stdout}")
+            
+            if result.returncode == 0:
+                logger.info("Certificate synchronization completed successfully")
+                return True
+            else:
+                if result.stderr:
+                    logger.error(f"Certificate synchronization failed: {result.stderr.strip()}")
+                return False
+        
+        except Exception as e:
+            logger.error(f"Certificate synchronization failed: {e}")
+            return False
+
     def certificate_exists(self, domain_name):
         cert_path = self.letsencrypt_dir / domain_name / 'fullchain.pem'
         return cert_path.exists()
@@ -79,43 +113,10 @@ class CertificateGenerator:
             else:
                 logger.error(f"Certificate generation failed: {result.stderr.strip()}")
                 return False, False
-                
+         
         except Exception as e:
             logger.error(f"Certificate generation failed: {e}")
             return False, False
-    
-    def sync_certificates(self):
-        sync_playbook = self.playbook_dir / 'sync-certificates.yml'
-        
-        if not sync_playbook.exists():
-            logger.error(f"Cannot open synchronization playbook '{sync_playbook}': No such file or directory")
-            return False
-        
-        cmd = [
-            'ansible-playbook',
-            str(sync_playbook),
-            '-i', self.inventory_path
-        ]
-        
-        logger.info("Synchronizing certificates between automation hosts")
-        
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd='/etc/letsencrypt')
-            
-            if result.stdout:
-                logger.info(f"Synchronization playbook output:\n{result.stdout}")
-            
-            if result.returncode == 0:
-                logger.info("Certificate synchronization completed successfully")
-                return True
-            else:
-                if result.stderr:
-                    logger.error(f"Certificate synchronization failed: {result.stderr.strip()}")
-                return False
-                
-        except Exception as e:
-            logger.error(f"Certificate synchronization failed: {e}")
-            return False
     
     def generate_all_certificates(self):
         certificates = self.registry.get('certificates', {})
@@ -172,7 +173,7 @@ def main():
                 sys.exit(1)
         else:
             logger.info("No new certificates generated")
-
+        
         logger.info("Completed certificate generation and synchronization")
         sys.exit(0)
     
