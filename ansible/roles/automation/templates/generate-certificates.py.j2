@@ -48,6 +48,7 @@ class CertificateGenerator:
             return False
         
         cmd = [
+            'sudo', '-u', 'actions-runner',
             'ansible-playbook',
             str(sync_playbook),
             '-i', self.inventory_path,
