@@ -34,6 +34,18 @@
     mode: '0644'
   notify: Restart unattended-upgrades
 
+- name: Ensure Ansible directory exists
+  file:
+    path: /etc/ansible
+    state: directory
+    mode: '0755'
+
+- name: Copy Ansible inventory file
+  copy:
+    src: "{{ playbook_dir }}/../hosts.yml"
+    dest: "/etc/ansible/hosts.yml"
+    mode: '0644'
+
 - name: Add HashiCorp GPG key
   apt_key:
     url: https://apt.releases.hashicorp.com/gpg
