@@ -42,7 +42,7 @@
 
 - name: Copy Ansible inventory file
   copy:
-    src: "{{ playbook_dir }}/hosts.yml"
+    src: "{{ playbook_dir }}/../hosts.yml"
     dest: "/etc/ansible/hosts.yml"
     mode: '0644'
 
