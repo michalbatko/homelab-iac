@@ -25,7 +25,7 @@ class CertificateGenerator:
         self.registry = self._load_registry()
         self.letsencrypt_dir = Path('/etc/letsencrypt/live')
         self.playbook_dir = Path('/etc/letsencrypt/deployment')
-        self.inventory_path = '{{ playbook_dir }}/../hosts.yml'
+        self.inventory_path = '/etc/ansible/hosts.yml'
     
     def _load_registry(self):
         try:
