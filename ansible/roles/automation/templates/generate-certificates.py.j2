@@ -51,8 +51,7 @@ class CertificateGenerator:
             '/usr/bin/sudo', '-u', 'actions-runner',
             'ansible-playbook',
             str(sync_playbook),
-            '-i', self.inventory_path,
-            '-e', 'ansible_ssh_common_args="-o StrictHostKeyChecking=no"'
+            '-i', self.inventory_path
         ]
         
         logger.info("Synchronizing certificates between automation hosts")
