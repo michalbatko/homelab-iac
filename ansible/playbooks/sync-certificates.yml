@@ -4,6 +4,7 @@
   become: yes
   vars:
     letsencrypt_dir: /etc/letsencrypt/live
+    ansible_ssh_timeout: 30
     
   tasks:
     - name: Find all certificate directories on each host
@@ -89,6 +90,7 @@
         perms: yes
         owner: yes
         group: yes
+        rsync_timeout: 60
       delegate_to: "{{ item.host }}"
       loop: "{{ certificates_to_sync }}"
       when: certificates_to_sync | length > 0
