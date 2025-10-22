@@ -51,13 +51,15 @@ class CertificateGenerator:
             '/usr/bin/sudo', '-u', 'actions-runner',
             'ansible-playbook',
             str(sync_playbook),
-            '-i', self.inventory_path
+            '-i', self.inventory_path,
+            '-v',
+            '-e', 'ansible_ssh_common_args="-o StrictHostKeyChecking=no -o ConnectTimeout=30"'
         ]
         
         logger.info("Synchronizing certificates between automation hosts")
         
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd='/etc/letsencrypt')
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd='/etc/letsencrypt', timeout=300)
             
             if result.stdout:
                 logger.info(f"Synchronization playbook output:\n{result.stdout}")
@@ -66,9 +68,14 @@ class CertificateGenerator:
                 logger.info("Certificate synchronization completed successfully")
                 return True
             else:
+                logger.error(f"Certificate synchronization failed with return code {result.returncode}")
                 if result.stderr:
-                    logger.error(f"Certificate synchronization failed: {result.stderr.strip()}")
+                    logger.error(f"Error output: {result.stderr.strip()}")
                 return False
+                
+        except subprocess.TimeoutExpired:
+            logger.error("Certificate synchronization timed out after 300 seconds")
+            return False
         
         except Exception as e:
             logger.error(f"Certificate synchronization failed: {e}")
