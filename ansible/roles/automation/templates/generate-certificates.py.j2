@@ -53,7 +53,7 @@ class CertificateGenerator:
             str(sync_playbook),
             '-i', self.inventory_path,
             '-v',
-            '-e', 'ansible_ssh_common_args="-o StrictHostKeyChecking=no -o ConnectTimeout=30"'
+            '-e', 'ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30"'
         ]
         
         logger.info("Synchronizing certificates between automation hosts")
