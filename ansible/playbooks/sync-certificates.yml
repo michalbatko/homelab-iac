@@ -82,16 +82,24 @@
         mode: '0755'
       loop: "{{ certificates_to_sync }}"
       
-    - name: Synchronize certificate files from source hosts
-      synchronize:
-        src: "{{ item.path }}/"
-        dest: "{{ letsencrypt_dir }}/{{ item.domain }}/"
-        delete: yes
-        recursive: yes
-        perms: yes
-        owner: yes
-        group: yes
-        rsync_timeout: 60
-      delegate_to: "{{ item.host }}"
+    - name: Synchronize certificate files using direct rsync
+      shell: |
+        echo "Syncing {{ item.domain }} from {{ item.host }} to {{ inventory_hostname }}"
+        
+        # Use rsync with the actions-runner user for SSH connectivity
+        sudo -u actions-runner rsync -avz --timeout=120 \
+          -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30" \
+          --delete \
+          {{ item.host }}:{{ item.path }}/ {{ letsencrypt_dir }}/{{ item.domain }}/
+        
+        echo "Successfully synced {{ item.domain }}"
       loop: "{{ certificates_to_sync }}"
       when: certificates_to_sync | length > 0
+      register: sync_results
+      failed_when: false
+      
+    - name: DEBUG: Display sync results
+      debug:
+        msg: "Sync result for {{ item.item.domain }}: {{ 'SUCCESS' if item.rc == 0 else 'FAILED' }}"
+      loop: "{{ sync_results.results | default([]) }}"
+      when: sync_results is defined
