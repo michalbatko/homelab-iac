@@ -86,7 +86,6 @@
       shell: |
         echo "Syncing {{ item.domain }} from {{ item.host }} to {{ inventory_hostname }}"
         
-        # Use rsync with the actions-runner user for SSH connectivity
         sudo -u actions-runner rsync -avz --timeout=120 \
           -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30" \
           --delete \
@@ -97,8 +96,8 @@
       when: certificates_to_sync | length > 0
       register: sync_results
       failed_when: false
-      
-    - name: DEBUG: Display sync results
+
+    - name: Display sync results
       debug:
         msg: "Sync result for {{ item.item.domain }}: {{ 'SUCCESS' if item.rc == 0 else 'FAILED' }}"
       loop: "{{ sync_results.results | default([]) }}"
