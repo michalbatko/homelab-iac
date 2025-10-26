@@ -76,6 +76,24 @@
     system: yes
     state: present
 
+- name: Create .ssh directory for actions-runner
+  file:
+    path: /opt/actions-runner/.ssh
+    state: directory
+    owner: actions-runner
+    group: actions-runner
+    mode: '0700'
+
+- name: Deploy SSH private key for Ansible
+  copy:
+    content: "{{ ansible_ssh_private_key }}"
+    dest: /opt/actions-runner/.ssh/id_rsa
+    owner: actions-runner
+    group: actions-runner
+    mode: '0600'
+  when: ansible_ssh_private_key is defined
+  no_log: true
+
 - name: Download GitHub Actions runner package
   get_url:
     url: https://github.com/actions/runner/releases/download/v2.328.0/actions-runner-linux-x64-2.328.0.tar.gz
