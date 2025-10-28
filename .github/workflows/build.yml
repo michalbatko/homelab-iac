@@ -83,7 +83,7 @@ jobs:
         echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" | ssh-add -
         ansible-playbook site.yml --check --diff \
           -e actions_access_token="${{ secrets.ACTIONS_ACCESS_TOKEN }}" \
-          -e ansible_ssh_private_key="${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" \
+          -e ansible_ssh_private_key="$(echo '${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}' | base64 -w 0)" \
           -e cloudflare_api_token="${{ secrets.CLOUDFLARE_API_TOKEN }}" \
           -e proxmox_api_token="${{ secrets.PROXMOX_VE_API_TOKEN }}" \
           -e vault_service_account_key="$(echo '${{ secrets.VAULT_SERVICE_ACCOUNT_KEY }}' | base64 -w 0)"
