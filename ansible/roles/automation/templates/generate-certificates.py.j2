@@ -26,6 +26,7 @@ class CertificateGenerator:
         self.letsencrypt_dir = Path('/etc/letsencrypt/live')
         self.playbook_dir = Path('/etc/letsencrypt/deployment')
         self.inventory_path = '/etc/ansible/hosts.yml'
+        self.ansible_ssh_key_path = '/opt/actions-runner/.ssh/ansible_key'
     
     def _load_registry(self):
         try:
@@ -53,7 +54,8 @@ class CertificateGenerator:
             str(sync_playbook),
             '-i', self.inventory_path,
             '-v',
-            '-e', 'ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30"'
+            '-e', 'ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30"',
+            '--private-key', self.ansible_ssh_key_path
         ]
         
         logger.info("Synchronizing certificates between automation hosts")
