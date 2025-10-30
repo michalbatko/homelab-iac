@@ -84,14 +84,10 @@
       
     - name: Synchronize certificate files using direct rsync
       shell: |
-        echo "Syncing {{ item.domain }} from {{ item.host }} to {{ inventory_hostname }}"
-        
-        sudo -u actions-runner rsync -avz --timeout=120 \
-          -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30" \
+        rsync -avz --timeout=120 \
+          -e "ssh -i /opt/actions-runner/.ssh/ansible_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30" \
           --delete \
-          {{ item.host }}:{{ item.path }}/ {{ letsencrypt_dir }}/{{ item.domain }}/
-        
-        echo "Successfully synced {{ item.domain }}"
+          root@{{ item.host }}:{{ item.path }}/ {{ letsencrypt_dir }}/{{ item.domain }}/
       loop: "{{ certificates_to_sync }}"
       when: certificates_to_sync | length > 0
       register: sync_results
