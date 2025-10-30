@@ -54,7 +54,6 @@ class CertificateGenerator:
             str(sync_playbook),
             '-i', self.inventory_path,
             '-v',
-            '-e', 'ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30"',
             '--private-key', self.ansible_ssh_key_path
         ]
         
