@@ -1,8 +1,13 @@
 - name: Deploy certificate to nginx servers
-  hosts: localhost
-  gather_facts: false
+  hosts: proxy
+  gather_facts: yes
+  become: yes
+  vars:
+    letsencrypt_dir: /etc/letsencrypt/live
+    ansible_ssh_timeout: 30
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30'
   
   tasks:
     - name: Placeholder task for nginx certificate deployment
       debug:
-        msg: "TODO: Implement nginx certificate deployment"
+        msg: "TODO: Implement nginx certificate deployment for {{ inventory_hostname }}"
