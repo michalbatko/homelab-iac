@@ -8,6 +8,6 @@
     ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30'
   
   tasks:
-    - name: Placeholder task for nginx certificate deployment
+    - name: Display received nginx certificates data
       debug:
-        msg: "TODO: Implement nginx certificate deployment for {{ inventory_hostname }}"
+        var: nginx_certificates
