@@ -9,6 +9,10 @@
     fullchain_path: "/etc/letsencrypt/live/infra01.home.batko.me/fullchain.pem"
 
   tasks:
+    - name: Display received proxmox certificates data
+      debug:
+        var: proxmox_certificates
+
     - name: Read certificate files
       slurp:
         src: "{{ item.path }}"

@@ -5,6 +5,7 @@ import subprocess
 import sys
 import logging
 import os
+import json
 from pathlib import Path
 
 logging.basicConfig(
@@ -46,13 +47,34 @@ class CertificateDeployer:
             logger.error(f"Cannot open deployment playbook '{deploy_playbook}': No such file or directory")
             return False
         
+        nginx_certificates = []
+        for domain_name, cert_config in self.registry.get('certificates', {}).items():
+            deployment_targets = cert_config.get('deployment_targets', [])
+            for target in deployment_targets:
+                if target.get('type') == 'nginx':
+                    nginx_certificates.append({
+                        'domain': domain_name,
+                        'hosts': target.get('hosts', []),
+                        'service': target.get('service', 'nginx'),
+                        'config_path': target.get('config_path', '/etc/nginx/sites-available/default')
+                    })
+        
+        if not nginx_certificates:
+            logger.info("No nginx certificate deployments required")
+            return True
+        
+        logger.info(f"Found {len(nginx_certificates)} domains requiring nginx deployment")
+        for cert in nginx_certificates:
+            logger.info(f"  - {cert['domain']} -> {len(cert['hosts'])} hosts")
+        
         cmd = [
             '/usr/bin/sudo', '-u', 'actions-runner',
             'ansible-playbook',
             str(deploy_playbook),
             '-i', self.inventory_path,
             '-v',
-            '--private-key', self.ansible_ssh_key_path
+            '--private-key', self.ansible_ssh_key_path,
+            '-e', f'nginx_certificates={json.dumps(nginx_certificates)}'
         ]
         
         logger.info("Deploying certificates to nginx servers")
@@ -80,6 +102,67 @@ class CertificateDeployer:
             logger.error(f"Certificate deployment failed: {e}")
             return False
     
+    def deploy_proxmox_certificates(self):
+        deploy_playbook = self.playbook_dir / 'deploy-proxmox-certificate.yml'
+        
+        if not deploy_playbook.exists():
+            logger.error(f"Cannot open deployment playbook '{deploy_playbook}': No such file or directory")
+            return False
+        
+        proxmox_certificates = []
+        for domain_name, cert_config in self.registry.get('certificates', {}).items():
+            deployment_targets = cert_config.get('deployment_targets', [])
+            for target in deployment_targets:
+                if target.get('type') == 'proxmox_api':
+                    proxmox_certificates.append({
+                        'domain': domain_name,
+                        'hosts': target.get('hosts', []),
+                        'api_endpoint': target.get('api_endpoint')
+                    })
+        
+        if not proxmox_certificates:
+            logger.info("No proxmox certificate deployments required")
+            return True
+        
+        logger.info(f"Found {len(proxmox_certificates)} domains requiring proxmox deployment")
+        for cert in proxmox_certificates:
+            logger.info(f"  - {cert['domain']} -> {cert['api_endpoint']}")
+        
+        cmd = [
+            '/usr/bin/sudo', '-u', 'actions-runner',
+            'ansible-playbook',
+            str(deploy_playbook),
+            '-i', self.inventory_path,
+            '-v',
+            '--private-key', self.ansible_ssh_key_path,
+            '-e', f'proxmox_certificates={json.dumps(proxmox_certificates)}'
+        ]
+        
+        logger.info("Deploying certificates to proxmox servers")
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd='/etc/letsencrypt', timeout=300)
+            
+            if result.stdout:
+                logger.info(f"Deployment playbook output:\n{result.stdout}")
+            
+            if result.returncode == 0:
+                logger.info("Proxmox certificate deployment completed successfully")
+                return True
+            else:
+                logger.error(f"Proxmox certificate deployment failed with return code {result.returncode}")
+                if result.stderr:
+                    logger.error(f"Error output: {result.stderr.strip()}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            logger.error("Proxmox certificate deployment timed out after 300 seconds")
+            return False
+        
+        except Exception as e:
+            logger.error(f"Proxmox certificate deployment failed: {e}")
+            return False
+
     def deploy_certificate(self, domain_name):
         logger.info(f"TODO: Deploy certificate for {domain_name}")
         return True
@@ -93,14 +176,24 @@ class CertificateDeployer:
         
         logger.info(f"Starting certificate deployment for {len(certificates)} domains")
         
+        deployment_success = True
+        
+        # Deploy certificates to nginx servers
         if not self.deploy_nginx_certificates():
             logger.error("Failed to deploy certificates to nginx servers")
-            return False
+            deployment_success = False
         
+        # Deploy certificates to proxmox servers
+        if not self.deploy_proxmox_certificates():
+            logger.error("Failed to deploy certificates to proxmox servers")
+            deployment_success = False
+        
+        # Process individual certificate deployments if needed
         for domain_name in certificates.keys():
-            self.deploy_certificate(domain_name)
+            if not self.deploy_certificate(domain_name):
+                deployment_success = False
         
-        return True
+        return deployment_success
 
 def main():
     if os.geteuid() != 0:
