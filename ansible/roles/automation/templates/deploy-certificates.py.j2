@@ -135,7 +135,8 @@ class CertificateDeployer:
             '-i', self.inventory_path,
             '-v',
             '--private-key', self.ansible_ssh_key_path,
-            '-e', f'proxmox_certificates={json.dumps(proxmox_certificates)}'
+            '-e', f'proxmox_certificates={json.dumps(proxmox_certificates)}',
+            '-e', 'proxmox_api_token_file=/etc/letsencrypt/proxmox-api-token.ini'
         ]
         
         logger.info("Deploying certificates to proxmox servers")
