@@ -1,44 +1,46 @@
 - name: Deploy certificate to Proxmox via API
   hosts: localhost
   gather_facts: false
-  vars:
-    proxmox_node: infra01
-    proxmox_api_host: infra01.home.batko.me
-    cert_path: "/etc/letsencrypt/live/infra01.home.batko.me/cert.pem"
-    key_path: "/etc/letsencrypt/live/infra01.home.batko.me/privkey.pem"
-    fullchain_path: "/etc/letsencrypt/live/infra01.home.batko.me/fullchain.pem"
 
   tasks:
     - name: Display received proxmox certificates data
       debug:
         var: proxmox_certificates
 
-    - name: Read certificate files
+    - name: Read Proxmox API token
       slurp:
-        src: "{{ item.path }}"
-      register: cert_files
-      loop:
-        - { path: "{{ cert_path }}", var: "cert" }
-        - { path: "{{ key_path }}", var: "key" }
-        - { path: "{{ fullchain_path }}", var: "fullchain" }
+        src: "{{ proxmox_api_token_file | default('/etc/letsencrypt/proxmox-api-token.ini') }}"
+      register: api_token_content
+      no_log: true
 
-    - name: Set certificate content variables
+    - name: Set API token variable
       set_fact:
-        cert_content: "{{ cert_files.results | selectattr('item.var', 'equalto', 'cert') | map(attribute='content') | first | b64decode }}"
-        key_content: "{{ cert_files.results | selectattr('item.var', 'equalto', 'key') | map(attribute='content') | first | b64decode }}"
-        fullchain_content: "{{ cert_files.results | selectattr('item.var', 'equalto', 'fullchain') | map(attribute='content') | first | b64decode }}"
+        proxmox_api_token: "{{ api_token_content.content | b64decode | trim }}"
+      no_log: true
 
-    - name: Upload certificate via Proxmox API
+    - name: Read certificate files for each domain
+      slurp:
+        src: "/etc/letsencrypt/live/{{ item.domain }}/{{ cert_file }}"
+      register: cert_files
+      loop: "{{ proxmox_certificates | product(['cert.pem', 'privkey.pem', 'fullchain.pem']) | list }}"
+      vars:
+        cert_file: "{{ item[1] }}"
+      loop_control:
+        label: "{{ item[0].domain }}/{{ item[1] }}"
+
+    - name: Deploy certificates to Proxmox
       uri:
-        url: "https://{{ proxmox_api_host }}:8006/api2/json/nodes/{{ proxmox_node }}/certificates/custom"
+        url: "{{ item.api_endpoint }}/api2/json/nodes/{{ item.api_endpoint | regex_replace('https://([^:]+):.*', '\\1') }}/certificates/custom"
         method: POST
         body_format: form-urlencoded
         body:
-          certificates: "{{ fullchain_content }}"
-          key: "{{ key_content }}"
+          certificates: "{{ cert_files.results | selectattr('item.0.domain', 'equalto', item.domain) | selectattr('item.1', 'equalto', 'fullchain.pem') | map(attribute='content') | first | b64decode }}"
+          key: "{{ cert_files.results | selectattr('item.0.domain', 'equalto', item.domain) | selectattr('item.1', 'equalto', 'privkey.pem') | map(attribute='content') | first | b64decode }}"
           restart: 1
         headers:
           Content-Type: "application/x-www-form-urlencoded"
           Authorization: "PVEAPIToken={{ proxmox_api_token }}"
         validate_certs: false
         status_code: [200, 201, 202, 204]
+      loop: "{{ proxmox_certificates }}"
+      when: proxmox_certificates is defined and proxmox_certificates | length > 0

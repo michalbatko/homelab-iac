@@ -1,5 +1,5 @@
 - name: Deploy certificate to nginx servers
-  hosts: proxy
+  hosts: proxy_hosts
   gather_facts: yes
   become: yes
   vars:
@@ -11,3 +11,45 @@
     - name: Display received nginx certificates data
       debug:
         var: nginx_certificates
+
+    - name: Ensure SSL directory exists
+      file:
+        path: "/etc/nginx/ssl/{{ item.domain }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop: "{{ nginx_certificates }}"
+
+    - name: Copy certificate files to nginx servers
+      copy:
+        src: "/etc/letsencrypt/live/{{ item.domain }}/{{ cert_file }}"
+        dest: "/etc/nginx/ssl/{{ item.domain }}/{{ cert_file }}"
+        owner: root
+        group: root
+        mode: '0644'
+        backup: yes
+      loop: "{{ nginx_certificates | product(['cert.pem', 'privkey.pem', 'fullchain.pem', 'chain.pem']) | list }}"
+      vars:
+        cert_file: "{{ item[1] }}"
+      loop_control:
+        label: "{{ item[0].domain }}/{{ item[1] }}"
+      notify: reload nginx
+
+    - name: Test nginx configuration
+      command: nginx -t
+      register: nginx_test
+      changed_when: false
+      failed_when: nginx_test.rc != 0
+
+    - name: Reload nginx if configuration is valid
+      systemd:
+        name: nginx
+        state: reloaded
+      when: nginx_test.rc == 0
+
+  handlers:
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded
