@@ -20,7 +20,7 @@
 
     - name: Read certificate files for each domain
       slurp:
-        src: "/etc/letsencrypt/live/{{ item.domain }}/{{ cert_file }}"
+        src: "/etc/letsencrypt/live/{{ item[0].domain }}/{{ cert_file }}"
       register: cert_files
       loop: "{{ proxmox_certificates | product(['cert.pem', 'privkey.pem', 'fullchain.pem']) | list }}"
       vars:

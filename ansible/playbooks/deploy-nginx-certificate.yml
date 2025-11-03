@@ -23,8 +23,8 @@
 
     - name: Copy certificate files to nginx servers
       copy:
-        src: "/etc/letsencrypt/live/{{ item.domain }}/{{ cert_file }}"
-        dest: "/etc/nginx/ssl/{{ item.domain }}/{{ cert_file }}"
+        src: "/etc/letsencrypt/live/{{ item[0].domain }}/{{ cert_file }}"
+        dest: "/etc/nginx/ssl/{{ item[0].domain }}/{{ cert_file }}"
         owner: root
         group: root
         mode: '0644'
