@@ -72,7 +72,6 @@ class CertificateDeployer:
             'ansible-playbook',
             str(deploy_playbook),
             '-i', self.inventory_path,
-            '-v',
             '--private-key', self.ansible_ssh_key_path,
             '-e', f'nginx_certificates={json.dumps(nginx_certificates)}'
         ]
@@ -133,7 +132,6 @@ class CertificateDeployer:
             'ansible-playbook',
             str(deploy_playbook),
             '-i', self.inventory_path,
-            '-v',
             '--private-key', self.ansible_ssh_key_path,
             '-e', f'proxmox_certificates={json.dumps(proxmox_certificates)}',
             '-e', 'proxmox_api_token_file=/etc/letsencrypt/proxmox-api-token.ini'

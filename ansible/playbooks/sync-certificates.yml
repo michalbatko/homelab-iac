@@ -13,13 +13,17 @@
         paths: "{{ letsencrypt_dir }}"
         file_type: directory
       register: local_cert_dirs
+      no_log: true
       
     - name: Get certificate modification times
       stat:
         path: "{{ item.path }}/fullchain.pem"
       register: local_cert_stats
       loop: "{{ local_cert_dirs.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
       when: local_cert_dirs.files is defined
+      no_log: true
       
     - name: Create certificate inventory with timestamps
       set_fact:
@@ -35,14 +39,18 @@
             }]
           }}
       loop: "{{ local_cert_stats.results }}"
+      loop_control:
+        label: "{{ item.item.path | basename }}"
       when: 
         - local_cert_stats.results is defined
         - item.stat is defined
+      no_log: true
         
     - name: Gather certificate info from all automation hosts
       set_fact:
         all_certificates: "{{ groups['automation_hosts'] | map('extract', hostvars, 'local_certificates') | list | flatten | default([]) }}"
       run_once: true
+      no_log: true
       
     - name: Determine newest certificate for each domain
       set_fact:
@@ -58,10 +66,13 @@
             })
           }}
       loop: "{{ all_certificates }}"
+      loop_control:
+        label: "{{ item.domain }}"
       when: 
         - item.exists
         - item.domain not in (newest_certificates | default({}))
       run_once: true
+      no_log: true
       
     - name: Identify certificates to sync to this host
       set_fact:
@@ -81,6 +92,8 @@
         group: root
         mode: '0755'
       loop: "{{ certificates_to_sync }}"
+      loop_control:
+        label: "{{ item.domain }}"
       
     - name: Synchronize certificate files using direct rsync
       shell: |
@@ -89,12 +102,22 @@
           --delete \
           root@{{ item.host }}:{{ item.path }}/ {{ letsencrypt_dir }}/{{ item.domain }}/
       loop: "{{ certificates_to_sync }}"
+      loop_control:
+        label: "{{ item.domain }} from {{ item.host }}"
       when: certificates_to_sync | length > 0
       register: sync_results
       failed_when: false
+      no_log: true
 
     - name: Display sync results
       debug:
-        msg: "Sync result for {{ item.item.domain }}: {{ 'SUCCESS' if item.rc == 0 else 'FAILED' }}"
+        msg: "Synced {{ item.item.domain }} from {{ item.item.host }}: {{ 'SUCCESS' if item.rc == 0 else 'FAILED' }}"
       loop: "{{ sync_results.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.domain }}"
       when: sync_results is defined
+
+    - name: Display sync summary
+      debug:
+        msg: "Certificate sync completed: {{ certificates_to_sync | length }} domains synchronized to {{ inventory_hostname }}"
+      when: certificates_to_sync is defined
