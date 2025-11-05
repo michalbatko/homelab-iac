@@ -67,13 +67,18 @@ class CertificateDeployer:
         for cert in nginx_certificates:
             logger.info(f"  - {cert['domain']} -> {len(cert['hosts'])} hosts")
         
+        # Write nginx certificates data to a temporary file
+        nginx_vars_file = '/tmp/nginx_certificates.json'
+        with open(nginx_vars_file, 'w') as f:
+            json.dump({'nginx_certificates': nginx_certificates}, f)
+        
         cmd = [
             '/usr/bin/sudo', '-u', 'actions-runner',
             'ansible-playbook',
             str(deploy_playbook),
             '-i', self.inventory_path,
             '--private-key', self.ansible_ssh_key_path,
-            '-e', f'nginx_certificates={json.dumps(nginx_certificates)}'
+            '-e', f'@{nginx_vars_file}'
         ]
         
         logger.info("Deploying certificates to nginx servers")
@@ -100,6 +105,13 @@ class CertificateDeployer:
         except Exception as e:
             logger.error(f"Certificate deployment failed: {e}")
             return False
+        
+        finally:
+            # Clean up temporary vars file
+            try:
+                os.unlink(nginx_vars_file)
+            except FileNotFoundError:
+                pass
     
     def deploy_proxmox_certificates(self):
         deploy_playbook = self.playbook_dir / 'deploy-proxmox-certificate.yml'
@@ -127,14 +139,21 @@ class CertificateDeployer:
         for cert in proxmox_certificates:
             logger.info(f"  - {cert['domain']} -> {cert['api_endpoint']}")
         
+        # Write proxmox certificates data to a temporary file
+        proxmox_vars_file = '/tmp/proxmox_certificates.json'
+        with open(proxmox_vars_file, 'w') as f:
+            json.dump({
+                'proxmox_certificates': proxmox_certificates,
+                'proxmox_api_token_file': '/etc/letsencrypt/proxmox-api-token.ini'
+            }, f)
+        
         cmd = [
             '/usr/bin/sudo', '-u', 'actions-runner',
             'ansible-playbook',
             str(deploy_playbook),
             '-i', self.inventory_path,
             '--private-key', self.ansible_ssh_key_path,
-            '-e', f'proxmox_certificates={json.dumps(proxmox_certificates)}',
-            '-e', 'proxmox_api_token_file=/etc/letsencrypt/proxmox-api-token.ini'
+            '-e', f'@{proxmox_vars_file}'
         ]
         
         logger.info("Deploying certificates to proxmox servers")
@@ -161,6 +180,13 @@ class CertificateDeployer:
         except Exception as e:
             logger.error(f"Proxmox certificate deployment failed: {e}")
             return False
+        
+        finally:
+            # Clean up temporary vars file
+            try:
+                os.unlink(proxmox_vars_file)
+            except FileNotFoundError:
+                pass
 
     def deploy_certificate(self, domain_name):
         logger.info(f"TODO: Deploy certificate for {domain_name}")
