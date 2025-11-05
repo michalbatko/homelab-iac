@@ -12,6 +12,11 @@
       debug:
         var: nginx_certificates
 
+    - name: Validate nginx certificates variable
+      fail:
+        msg: "nginx_certificates must be defined and be a list"
+      when: nginx_certificates is not defined or nginx_certificates is not iterable or nginx_certificates is string
+
     - name: Ensure SSL directory exists
       file:
         path: "/etc/nginx/ssl/{{ item.domain }}"

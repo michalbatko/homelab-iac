@@ -7,6 +7,21 @@
       debug:
         var: proxmox_certificates
 
+    - name: Validate proxmox certificates variable
+      fail:
+        msg: "proxmox_certificates must be defined and be a list"
+      when: proxmox_certificates is not defined or proxmox_certificates is not iterable or proxmox_certificates is string
+
+    - name: Check if Proxmox API token file exists
+      stat:
+        path: "{{ proxmox_api_token_file | default('/etc/letsencrypt/proxmox-api-token.ini') }}"
+      register: token_file_stat
+
+    - name: Fail if API token file is missing
+      fail:
+        msg: "Proxmox API token file not found at {{ proxmox_api_token_file | default('/etc/letsencrypt/proxmox-api-token.ini') }}"
+      when: not token_file_stat.stat.exists
+
     - name: Read Proxmox API token
       slurp:
         src: "{{ proxmox_api_token_file | default('/etc/letsencrypt/proxmox-api-token.ini') }}"
