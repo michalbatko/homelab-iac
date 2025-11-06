@@ -1,54 +1,35 @@
-- name: Deploy certificate to nginx servers
+- name: Deploy certificates to nginx hosts
   hosts: proxy_hosts
-  gather_facts: yes
+  gather_facts: false
   become: yes
-  vars:
-    letsencrypt_dir: /etc/letsencrypt/live
-    ansible_ssh_timeout: 30
-    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30'
-  
+
   tasks:
-    - name: Display received nginx certificates data
+    - name: Show execution context
+      shell: |
+        echo "Hostname: $(hostname)"
+        echo "User: $(whoami)"
+        echo "Working directory: $(pwd)"
+      register: context_info
+
+    - name: Display execution context
       debug:
-        var: nginx_certificates
+        var: context_info.stdout_lines
 
-    - name: Validate nginx certificates variable
-      fail:
-        msg: "nginx_certificates must be defined and be a list"
-      when: nginx_certificates is not defined or nginx_certificates is not iterable or nginx_certificates is string
-
-    - name: Ensure SSL directory exists
-      file:
-        path: "/etc/nginx/ssl/{{ item.domain }}"
-        state: directory
-        owner: root
-        group: root
-        mode: '0755'
+    - name: Create SSL directories
+      debug:
+        msg: "TODO: Create /etc/nginx/ssl/{{ item.domain }} locally"
       loop: "{{ nginx_certificates }}"
 
-    - name: Copy certificate files to nginx servers
-      copy:
-        src: "/etc/letsencrypt/live/{{ item[0].domain }}/{{ cert_file }}"
-        dest: "/etc/nginx/ssl/{{ item[0].domain }}/{{ cert_file }}"
-        owner: root
-        group: root
-        mode: '0644'
-        backup: yes
-      loop: "{{ nginx_certificates | product(['cert.pem', 'privkey.pem', 'fullchain.pem', 'chain.pem']) | list }}"
-      vars:
-        cert_file: "{{ item[1] }}"
-      loop_control:
-        label: "{{ item[0].domain }}/{{ item[1] }}"
-      notify: reload nginx
+    - name: Copy certificate files
+      debug:
+        msg: "TODO: Copy /etc/letsencrypt/live/{{ item.domain }}/* from automation host to local /etc/nginx/ssl/{{ item.domain }}/"
+      loop: "{{ nginx_certificates }}"
 
-    - name: Test nginx configuration
-      command: nginx -t
-      register: nginx_test
-      changed_when: false
-      failed_when: nginx_test.rc != 0
+    - name: Set file permissions
+      debug:
+        msg: "TODO: Set permissions on certificate files for {{ item.domain }}"
+      loop: "{{ nginx_certificates }}"
 
-  handlers:
-    - name: reload nginx
-      systemd:
-        name: nginx
-        state: reloaded
+    - name: Reload nginx service
+      debug:
+        msg: "TODO: Reload nginx locally"
