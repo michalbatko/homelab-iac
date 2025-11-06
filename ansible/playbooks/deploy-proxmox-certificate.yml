@@ -1,7 +1,6 @@
 - name: Deploy certificate to Proxmox via API
   hosts: localhost
   gather_facts: false
-  become: yes
 
   tasks:
     - name: Show execution context
