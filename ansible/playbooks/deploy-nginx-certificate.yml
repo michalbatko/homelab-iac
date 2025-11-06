@@ -33,4 +33,3 @@
     - name: Reload nginx service
       debug:
         msg: "TODO: Reload nginx locally"
-      loop: "{{ nginx_certificates }}"
