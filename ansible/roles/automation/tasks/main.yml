@@ -223,9 +223,20 @@
   changed_when: "'[STATE_CHANGE]' in generate_certificates_result.stdout"
   ignore_errors: "{{ ansible_check_mode }}"
 
+- name: Display certificate generation output
+  debug:
+    var: generate_certificates_result.stdout_lines
+  when: generate_certificates_result.stdout_lines is defined
+
 - name: Deploy certificates to target systems
   command: deploy-certificates
+  register: deploy_certificates_result
   ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Display certificate deployment output
+  debug:
+    var: deploy_certificates_result.stdout_lines
+  when: deploy_certificates_result.stdout_lines is defined
 
 - name: Create certbot deploy hook directory
   file:
