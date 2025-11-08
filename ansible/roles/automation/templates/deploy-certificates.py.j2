@@ -68,7 +68,6 @@ class CertificateDeployer:
         for cert in nginx_certificates:
             logger.info(f"  - {cert['domain']} -> {len(cert['hosts'])} hosts")
         
-        # Write nginx certificates data to a temporary file
         nginx_vars_file = '/tmp/nginx_certificates.json'
         with open(nginx_vars_file, 'w') as f:
             json.dump({'nginx_certificates': nginx_certificates}, f)
@@ -108,7 +107,6 @@ class CertificateDeployer:
             return False
         
         finally:
-            # Clean up temporary vars file
             try:
                 os.unlink(nginx_vars_file)
             except FileNotFoundError:
@@ -140,7 +138,6 @@ class CertificateDeployer:
         for cert in proxmox_certificates:
             logger.info(f"  - {cert['domain']} -> {cert['api_endpoint']}")
         
-        # Write proxmox certificates data to a temporary file
         proxmox_vars_file = '/tmp/proxmox_certificates.json'
         with open(proxmox_vars_file, 'w') as f:
             json.dump({
@@ -183,7 +180,6 @@ class CertificateDeployer:
             return False
         
         finally:
-            # Clean up temporary vars file
             try:
                 os.unlink(proxmox_vars_file)
             except FileNotFoundError:
@@ -204,17 +200,14 @@ class CertificateDeployer:
         
         deployment_success = True
         
-        # Deploy certificates to nginx servers
         if not self.deploy_nginx_certificates():
             logger.error("Failed to deploy certificates to nginx servers")
             deployment_success = False
         
-        # Deploy certificates to proxmox servers
         if not self.deploy_proxmox_certificates():
             logger.error("Failed to deploy certificates to proxmox servers")
             deployment_success = False
         
-        # Process individual certificate deployments if needed
         for domain_name in certificates.keys():
             if not self.deploy_certificate(domain_name):
                 deployment_success = False
