@@ -84,10 +84,15 @@
       
     - name: Display newest certificates by domain
       debug:
-        msg: "Newest certificates: {{ newest_certificates | default({}) | dict2items | map(attribute='value') | map('combine', {'mtime_readable': item.value.mtime | int | strftime('%Y-%m-%d %H:%M:%S')}) | list }}"
+        msg: >-
+          Domain: {{ item.key }}
+          Host: {{ item.value.host }}
+          mtime: {{ item.value.mtime }}
+          mtime_readable: {{ item.value.mtime | int | strftime('%Y-%m-%d %H:%M:%S') }}
+      loop: "{{ newest_certificates | default({}) | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
       run_once: true
-      vars:
-        item: "{{ {'value': {'mtime': 0}} }}"
       
     - name: Identify certificates to sync to this host
       set_fact:
