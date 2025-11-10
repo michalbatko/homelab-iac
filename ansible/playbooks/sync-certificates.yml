@@ -13,7 +13,10 @@
         paths: "{{ letsencrypt_dir }}"
         file_type: directory
       register: local_cert_dirs
-      no_log: true
+      
+    - name: Display found certificate directories
+      debug:
+        msg: "Found {{ local_cert_dirs.files | length }} certificate directories on {{ inventory_hostname }}: {{ local_cert_dirs.files | map(attribute='path') | map('basename') | list }}"
       
     - name: Get certificate modification times
       stat:
@@ -23,7 +26,6 @@
       loop_control:
         label: "{{ item.path | basename }}"
       when: local_cert_dirs.files is defined
-      no_log: true
       
     - name: Create certificate inventory with timestamps
       set_fact:
@@ -44,13 +46,20 @@
       when: 
         - local_cert_stats.results is defined
         - item.stat is defined
-      no_log: true
+        
+    - name: Display local certificate inventory
+      debug:
+        msg: "Local certificates on {{ inventory_hostname }}: {{ local_certificates | default([]) | map(attribute='domain') | list }}"
         
     - name: Gather certificate info from all automation hosts
       set_fact:
         all_certificates: "{{ groups['automation_hosts'] | map('extract', hostvars, 'local_certificates') | list | flatten | default([]) }}"
       run_once: true
-      no_log: true
+      
+    - name: Display all certificates found across hosts
+      debug:
+        msg: "All certificates across hosts: {{ all_certificates | groupby('domain') | map('first') | list }}"
+      run_once: true
       
     - name: Determine newest certificate for each domain
       set_fact:
@@ -72,7 +81,18 @@
         - item.exists
         - item.domain not in (newest_certificates | default({}))
       run_once: true
-      no_log: true
+      
+    - name: Display newest certificates by domain
+      debug:
+        msg: >-
+          Domain: {{ item.key }}
+          Host: {{ item.value.host }}
+          mtime: {{ item.value.mtime }}
+          mtime_readable: {{ item.value.mtime | int | strftime('%Y-%m-%d %H:%M:%S') }}
+      loop: "{{ newest_certificates | default({}) | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      run_once: true
       
     - name: Identify certificates to sync to this host
       set_fact:
@@ -83,6 +103,10 @@
             rejectattr('domain', 'in', (local_certificates | default([]) | selectattr('exists') | map(attribute='domain') | list)) |
             list
           }}
+      
+    - name: Display certificates identified for sync
+      debug:
+        msg: "Certificates to sync to {{ inventory_hostname }}: {{ certificates_to_sync | map(attribute='domain') | list }} (from hosts: {{ certificates_to_sync | map(attribute='host') | list }})"
       
     - name: Create certificate directories for incoming certificates
       file:
@@ -107,7 +131,6 @@
       when: certificates_to_sync | length > 0
       register: sync_results
       failed_when: false
-      no_log: true
 
     - name: Display sync results
       debug:
