@@ -88,7 +88,6 @@
           Domain: {{ item.key }}
           Host: {{ item.value.host }}
           mtime: {{ item.value.mtime }}
-          mtime_readable: {{ item.value.mtime | int | strftime('%Y-%m-%d %H:%M:%S') }}
       loop: "{{ newest_certificates | default({}) | dict2items }}"
       loop_control:
         label: "{{ item.key }}"
