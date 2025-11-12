@@ -18,16 +18,20 @@
       debug:
         msg: "Found {{ local_cert_dirs.files | length }} certificate directories on {{ inventory_hostname }}: {{ local_cert_dirs.files | map(attribute='path') | map('basename') | list }}"
       
-    - name: Get certificate modification times
-      stat:
-        path: "{{ item.path }}/fullchain.pem"
-      register: local_cert_stats
+    - name: Get certificate expiry dates
+      shell: |
+        if [ -f "{{ item.path }}/fullchain.pem" ]; then
+          openssl x509 -in "{{ item.path }}/fullchain.pem" -noout -enddate | sed 's/notAfter=//'
+        else
+          echo "MISSING"
+        fi
+      register: local_cert_expiry
       loop: "{{ local_cert_dirs.files }}"
       loop_control:
         label: "{{ item.path | basename }}"
       when: local_cert_dirs.files is defined
       
-    - name: Create certificate inventory with timestamps
+    - name: Create certificate inventory with expiry dates
       set_fact:
         local_certificates: >-
           {{
@@ -35,17 +39,18 @@
             [{
               'domain': item.item.path | basename,
               'path': item.item.path,
-              'mtime': item.stat.mtime | default(0),
-              'exists': item.stat.exists | default(false),
+              'expiry_date': item.stdout if item.stdout != "MISSING" else "",
+              'expiry_epoch': (item.stdout | to_datetime('%b %d %H:%M:%S %Y %Z')).strftime('%s') | int if item.stdout != "MISSING" else 0,
+              'exists': item.stdout != "MISSING",
               'host': inventory_hostname
             }]
           }}
-      loop: "{{ local_cert_stats.results }}"
+      loop: "{{ local_cert_expiry.results }}"
       loop_control:
         label: "{{ item.item.path | basename }}"
       when: 
-        - local_cert_stats.results is defined
-        - item.stat is defined
+        - local_cert_expiry.results is defined
+        - item.stdout is defined
         
     - name: Display local certificate inventory
       debug:
@@ -70,7 +75,7 @@
               item.domain: all_certificates |
               selectattr('domain', 'equalto', item.domain) |
               selectattr('exists', 'equalto', true) |
-              sort(attribute='mtime', reverse=true) |
+              sort(attribute='expiry_epoch', reverse=true) |
               first
             })
           }}
@@ -87,7 +92,8 @@
         msg: >-
           Domain: {{ item.key }}
           Host: {{ item.value.host }}
-          mtime: {{ item.value.mtime }}
+          expiry_date: {{ item.value.expiry_date }}
+          expiry_epoch: {{ item.value.expiry_epoch }}
       loop: "{{ newest_certificates | default({}) | dict2items }}"
       loop_control:
         label: "{{ item.key }}"
