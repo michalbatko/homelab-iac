@@ -18,43 +18,46 @@
       debug:
         msg: "Found {{ local_cert_dirs.files | length }} certificate directories on {{ inventory_hostname }}: {{ local_cert_dirs.files | map(attribute='path') | map('basename') | list }}"
       
-    - name: Get certificate expiry dates
+    - name: Get certificate details
       shell: |
-        if [ -f "{{ item.path }}/fullchain.pem" ]; then
-          openssl x509 -in "{{ item.path }}/fullchain.pem" -noout -enddate | sed 's/notAfter=//'
+        if [ -f "{{ item.path }}/cert.pem" ]; then
+          domain=$(openssl x509 -in "{{ item.path }}/cert.pem" -subject -noout | sed -n 's/.*CN=\([^,]*\).*/\1/p')
+          expiry=$(openssl x509 -in "{{ item.path }}/cert.pem" -enddate -noout | cut -d= -f2)
+          echo "${domain}|${expiry}"
         else
-          echo "MISSING"
+          echo "MISSING|MISSING"
         fi
-      register: local_cert_expiry
       loop: "{{ local_cert_dirs.files }}"
       loop_control:
         label: "{{ item.path | basename }}"
+      register: local_cert_details
       when: local_cert_dirs.files is defined
       
-    - name: Create certificate inventory with expiry dates
+    - name: Create certificate inventory
       set_fact:
         local_certificates: >-
           {{
             local_certificates | default([]) +
             [{
-              'domain': item.item.path | basename,
+              'domain': item.stdout.split('|')[0] if item.stdout != "MISSING|MISSING" else "",
+              'cert_path': item.item.path | basename,
               'path': item.item.path,
-              'expiry_date': item.stdout if item.stdout != "MISSING" else "",
-              'expiry_epoch': (item.stdout | to_datetime('%b %d %H:%M:%S %Y %Z')).strftime('%s') | int if item.stdout != "MISSING" else 0,
-              'exists': item.stdout != "MISSING",
+              'expiry_date': item.stdout.split('|')[1] if item.stdout != "MISSING|MISSING" else "",
+              'expiry_epoch': (item.stdout.split('|')[1] | to_datetime('%b %d %H:%M:%S %Y %Z')).strftime('%s') | int if item.stdout != "MISSING|MISSING" else 0,
+              'exists': item.stdout != "MISSING|MISSING",
               'host': inventory_hostname
             }]
           }}
-      loop: "{{ local_cert_expiry.results }}"
+      loop: "{{ local_cert_details.results }}"
       loop_control:
         label: "{{ item.item.path | basename }}"
       when: 
-        - local_cert_expiry.results is defined
+        - local_cert_details.results is defined
         - item.stdout is defined
         
     - name: Display local certificate inventory
       debug:
-        msg: "Local certificates on {{ inventory_hostname }}: {{ local_certificates | default([]) | map(attribute='domain') | list }}"
+        msg: "Local certificates on {{ inventory_hostname }}: {{ local_certificates | map(attribute='domain') | list }} (cert paths: {{ local_certificates | map(attribute='cert_path') | list }})"
         
     - name: Gather certificate info from all automation hosts
       set_fact:
@@ -66,48 +69,70 @@
         msg: "All certificates across hosts: {{ all_certificates | groupby('domain') | map('first') | list }}"
       run_once: true
       
+    - name: Extract unique domains
+      set_fact:
+        unique_domains: "{{ all_certificates | map(attribute='domain') | unique | list }}"
+      run_once: true
+      
     - name: Determine newest certificate for each domain
       set_fact:
         newest_certificates: >-
           {{
-            newest_certificates | default({}) |
-            combine({
-              item.domain: all_certificates |
-              selectattr('domain', 'equalto', item.domain) |
-              selectattr('exists', 'equalto', true) |
-              sort(attribute='expiry_epoch', reverse=true) |
-              first
-            })
+            newest_certificates | default([]) +
+            [{
+              'domain': item,
+              'cert_path': newest_cert['cert_path'],
+              'host': newest_cert['host'],
+              'path': newest_cert['path'],
+              'expiry_date': newest_cert['expiry_date'],
+              'expiry_epoch': newest_cert['expiry_epoch']
+            }]
           }}
-      loop: "{{ all_certificates }}"
+      vars:
+        newest_cert: >-
+          {{
+            all_certificates | 
+            selectattr('domain', 'equalto', item) | 
+            selectattr('exists', 'equalto', true) | 
+            sort(attribute='expiry_epoch', reverse=true) | 
+            first
+          }}
+      loop: "{{ unique_domains }}"
       loop_control:
-        label: "{{ item.domain }}"
-      when: 
-        - item.exists
-        - item.domain not in (newest_certificates | default({}))
+        label: "{{ item }}"
       run_once: true
+      when: 
+        - unique_domains is defined
+        - (all_certificates | selectattr('domain', 'equalto', item) | selectattr('exists', 'equalto', true) | list | length) > 0
       
     - name: Display newest certificates by domain
       debug:
         msg: >-
-          Domain: {{ item.key }}
-          Host: {{ item.value.host }}
-          expiry_date: {{ item.value.expiry_date }}
-          expiry_epoch: {{ item.value.expiry_epoch }}
-      loop: "{{ newest_certificates | default({}) | dict2items }}"
+          Domain: {{ item.domain }}
+          (cert path: {{ item.cert_path }})
+          Host: {{ item.host }}
+          expiry_date: {{ item.expiry_date }}
+          expiry_epoch: {{ item.expiry_epoch }}
+      loop: "{{ newest_certificates }}"
       loop_control:
-        label: "{{ item.key }}"
+        label: "{{ item.domain }}"
       run_once: true
       
     - name: Identify certificates to sync to this host
       set_fact:
         certificates_to_sync: >-
           {{
-            newest_certificates.values() |
-            selectattr('host', 'ne', inventory_hostname) |
-            rejectattr('domain', 'in', (local_certificates | default([]) | selectattr('exists') | map(attribute='domain') | list)) |
-            list
+            certificates_to_sync | default([]) +
+            ([{
+              'domain': item.domain,
+              'cert_path': item.cert_path,
+              'host': item.host,
+              'path': item.path
+            }] if item.host != inventory_hostname else [])
           }}
+      loop: "{{ newest_certificates }}"
+      loop_control:
+        label: "{{ item.domain }}"
       
     - name: Display certificates identified for sync
       debug:
@@ -115,35 +140,52 @@
       
     - name: Create certificate directories for incoming certificates
       file:
-        path: "{{ letsencrypt_dir }}/{{ item.domain }}"
+        path: "{{ letsencrypt_dir }}/{{ item.cert_path }}"
         state: directory
         owner: root
         group: root
         mode: '0755'
       loop: "{{ certificates_to_sync }}"
       loop_control:
-        label: "{{ item.domain }}"
+        label: "{{ item.cert_path }}"
       
     - name: Synchronize certificate files using direct rsync
       shell: |
-        rsync -avz --timeout=120 \
+        echo "Starting sync of {{ item.domain }} ({{ item.cert_path }}) from {{ item.host }}:{{ item.path }}"
+        rsync -avz --timeout=120 --itemize-changes --stats \
           -e "ssh -i /opt/actions-runner/.ssh/ansible_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30" \
           --delete \
-          root@{{ item.host }}:{{ item.path }}/ {{ letsencrypt_dir }}/{{ item.domain }}/
+          root@{{ item.host }}:{{ item.path }}/ {{ letsencrypt_dir }}/{{ item.cert_path }}/
+        echo "Sync completed with exit code: $?"
       loop: "{{ certificates_to_sync }}"
       loop_control:
-        label: "{{ item.domain }} from {{ item.host }}"
+        label: "{{ item.cert_path }} from {{ item.host }}"
       when: certificates_to_sync | length > 0
       register: sync_results
       failed_when: false
 
     - name: Display sync results
       debug:
-        msg: "Synced {{ item.item.domain }} from {{ item.item.host }}: {{ 'SUCCESS' if item.rc == 0 else 'FAILED' }}"
+        msg: "Synced {{ item.item.domain }} ({{ item.item.cert_path }}) from {{ item.item.host }}: {{ 'SUCCESS' if item.rc == 0 else 'FAILED' }}"
       loop: "{{ sync_results.results | default([]) }}"
       loop_control:
-        label: "{{ item.item.domain }}"
+        label: "{{ item.item.cert_path }}"
       when: sync_results is defined
+
+    - name: Display rsync output for failed syncs
+      debug:
+        msg: |
+          Rsync output for {{ item.item.domain }} ({{ item.item.cert_path }}):
+          STDOUT:
+          {{ item.stdout }}
+          STDERR:
+          {{ item.stderr }}
+      loop: "{{ sync_results.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.cert_path }}"
+      when: 
+        - sync_results is defined
+        - (item.rc != 0 or ansible_verbosity >= 2)
 
     - name: Display sync summary
       debug:
