@@ -21,7 +21,10 @@
     - name: Get certificate details
       shell: |
         if [ -f "{{ item.path }}/cert.pem" ]; then
-          domain=$(openssl x509 -in "{{ item.path }}/cert.pem" -subject -noout | sed -n 's/.*CN=\([^,]*\).*/\1/p')
+          domain=$(openssl x509 -in "{{ item.path }}/cert.pem" -subject -noout | sed -n 's/.*CN=\s*\([^,]*\).*/\1/p' | tr -d ' ')
+          if [ -z "$domain" ]; then
+            domain=$(openssl x509 -in "{{ item.path }}/cert.pem" -subject -noout | sed -n 's/.*CN=\([^/,]*\).*/\1/p' | tr -d ' ')
+          fi
           expiry=$(openssl x509 -in "{{ item.path }}/cert.pem" -enddate -noout | cut -d= -f2)
           echo "${domain}|${expiry}"
         else
@@ -32,6 +35,7 @@
         label: "{{ item.path | basename }}"
       register: local_cert_details
       when: local_cert_dirs.files is defined
+      no_log: true
       
     - name: Create certificate inventory
       set_fact:
@@ -54,6 +58,7 @@
       when: 
         - local_cert_details.results is defined
         - item.stdout is defined
+      no_log: true
         
     - name: Display local certificate inventory
       debug:
@@ -66,7 +71,7 @@
       
     - name: Display all certificates found across hosts
       debug:
-        msg: "All certificates across hosts: {{ all_certificates | groupby('domain') | map('first') | list }}"
+        msg: "All certificates across hosts: {{ all_certificates | selectattr('domain', 'ne', '') | map(attribute='domain') | unique | list }}"
       run_once: true
       
     - name: Extract unique domains
