@@ -38,13 +38,72 @@
         msg: "{{ inventory_hostname }}: {% for result in cert_details.results %}{%- set parts = result.stdout.split(':') -%}{%- set cert_name = parts[0] -%}{%- set domain = parts[1] -%}{%- set expiry = parts[2] -%}{%- if domain == 'MISSING' -%}[MISSING]{{ cert_name }}{%- else -%}[PRESENT]{{ cert_name }}({{ expiry }}){%- endif -%}{% if not loop.last %}; {% endif %}{% endfor %}"
       
     - name: Build certificate inventory across all hosts
-      debug:
-        msg: "TODO: Collect all certificate info from all automation hosts into unified inventory"
+      set_fact:
+        global_cert_inventory: "{{ global_cert_inventory | default({}) | combine({inventory_hostname: cert_details.results | map(attribute='stdout') | list}) }}"
+      delegate_to: localhost
+      delegate_facts: true
+
+    - name: Find latest certificate for each domain
+      set_fact:
+        latest_certificates: >-
+          {%- set result = {} -%}
+          {%- set all_domains = [] -%}
+          {%- for host, cert_list in global_cert_inventory.items() -%}
+            {%- for cert_data in cert_list -%}
+              {%- set parts = cert_data.split(':') -%}
+              {%- if parts[1] != 'MISSING' -%}
+                {%- set _ = all_domains.append(parts[1]) -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endfor -%}
+          {%- for domain in all_domains | unique -%}
+            {%- set domain_certs = [] -%}
+            {%- for host, cert_list in global_cert_inventory.items() -%}
+              {%- for cert_data in cert_list -%}
+                {%- set parts = cert_data.split(':') -%}
+                {%- if parts[1] == domain -%}
+                  {%- set _ = domain_certs.append({'host': host, 'cert_name': parts[0], 'domain': parts[1], 'expiry': parts[2]}) -%}
+                {%- endif -%}
+              {%- endfor -%}
+            {%- endfor -%}
+            {%- set latest_cert = domain_certs | sort(attribute='expiry') | last -%}
+            {%- set _ = result.update({domain: latest_cert}) -%}
+          {%- endfor -%}
+          {{ result }}
       run_once: true
+      delegate_to: localhost
       
     - name: Determine sync plan
-      debug:
-        msg: "TODO: For each host, identify which certificates it needs to receive from other hosts"
+      set_fact:
+        sync_plan: >-
+          {%- set plan = {'copy': [], 'remove': []} -%}
+          {%- for domain, latest_cert in latest_certificates.items() -%}
+            {%- for host, cert_list in global_cert_inventory.items() -%}
+              {%- set host_certs = [] -%}
+              {%- for cert_data in cert_list -%}
+                {%- set parts = cert_data.split(':') -%}
+                {%- if parts[1] == domain -%}
+                  {%- set _ = host_certs.append({'cert_name': parts[0], 'domain': parts[1], 'expiry': parts[2]}) -%}
+                {%- endif -%}
+              {%- endfor -%}
+              {%- if host != latest_cert.host -%}
+                {%- if host_certs | length == 0 or (host_certs | selectattr('domain', 'ne', 'MISSING') | list | length == 0) -%}
+                  {%- set _ = plan.copy.append({'target_host': host, 'source_host': latest_cert.host, 'source_cert_name': latest_cert.cert_name, 'domain': domain, 'expiry': latest_cert.expiry}) -%}
+                {%- else -%}
+                  {%- set current_certs = host_certs | selectattr('domain', 'ne', 'MISSING') | list -%}
+                  {%- for cert in current_certs -%}
+                    {%- if cert.expiry < latest_cert.expiry -%}
+                      {%- set _ = plan.copy.append({'target_host': host, 'source_host': latest_cert.host, 'source_cert_name': latest_cert.cert_name, 'domain': domain, 'expiry': latest_cert.expiry}) -%}
+                      {%- set _ = plan.remove.append({'host': host, 'cert_name': cert.cert_name, 'domain': domain, 'reason': 'outdated'}) -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                {%- endif -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endfor -%}
+          {{ plan }}
+      run_once: true
+      delegate_to: localhost
       
     - name: Execute certificate synchronization
       debug:
