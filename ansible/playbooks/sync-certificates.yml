@@ -39,9 +39,14 @@
       
     - name: Build certificate inventory across all hosts
       set_fact:
-        global_cert_inventory: "{{ global_cert_inventory | default({}) | combine({inventory_hostname: cert_details.results | map(attribute='stdout') | list}) }}"
+        global_cert_inventory: >-
+          {%- set result = {} -%}
+          {%- for host in groups['automation_hosts'] -%}
+            {%- set _ = result.update({host: hostvars[host]['cert_details']['results'] | map(attribute='stdout') | list}) -%}
+          {%- endfor -%}
+          {{ result }}
+      run_once: true
       delegate_to: localhost
-      delegate_facts: true
 
     - name: Find latest certificate for each domain
       set_fact:
@@ -72,38 +77,90 @@
           {{ result }}
       run_once: true
       delegate_to: localhost
-      
-    - name: Determine sync plan
+
+    - name: Determine sync plan - identify missing certificates
       set_fact:
-        sync_plan: >-
-          {%- set plan = {'copy': [], 'remove': []} -%}
-          {%- for domain, latest_cert in latest_certificates.items() -%}
-            {%- for host, cert_list in global_cert_inventory.items() -%}
-              {%- set host_certs = [] -%}
-              {%- for cert_data in cert_list -%}
-                {%- set parts = cert_data.split(':') -%}
-                {%- if parts[1] == domain -%}
-                  {%- set _ = host_certs.append({'cert_name': parts[0], 'domain': parts[1], 'expiry': parts[2]}) -%}
-                {%- endif -%}
-              {%- endfor -%}
-              {%- if host != latest_cert.host -%}
-                {%- if host_certs | length == 0 or (host_certs | selectattr('domain', 'ne', 'MISSING') | list | length == 0) -%}
-                  {%- set _ = plan.copy.append({'target_host': host, 'source_host': latest_cert.host, 'source_cert_name': latest_cert.cert_name, 'domain': domain, 'expiry': latest_cert.expiry}) -%}
-                {%- else -%}
-                  {%- set current_certs = host_certs | selectattr('domain', 'ne', 'MISSING') | list -%}
-                  {%- for cert in current_certs -%}
-                    {%- if cert.expiry < latest_cert.expiry -%}
-                      {%- set _ = plan.copy.append({'target_host': host, 'source_host': latest_cert.host, 'source_cert_name': latest_cert.cert_name, 'domain': domain, 'expiry': latest_cert.expiry}) -%}
-                      {%- set _ = plan.remove.append({'host': host, 'cert_name': cert.cert_name, 'domain': domain, 'reason': 'outdated'}) -%}
-                    {%- endif -%}
-                  {%- endfor -%}
+        certificates_to_copy: >-
+          {%- set result = [] -%}
+          {%- for domain, latest_info in latest_certificates.items() -%}
+            {%- set source_host = latest_info.host -%}
+            {%- for target_host in groups['automation_hosts'] -%}
+              {%- if target_host != source_host -%}
+                {%- set matching_certs = [] -%}
+                {%- for cert_entry in global_cert_inventory[target_host] -%}
+                  {%- set parts = cert_entry.split(':') -%}
+                  {%- if parts[1] == domain and parts[1] != 'MISSING' -%}
+                    {%- set _ = matching_certs.append(parts[2]) -%}
+                  {%- endif -%}
+                {%- endfor -%}
+                {%- if matching_certs | length == 0 -%}
+                  {%- set copy_item = {
+                    'domain': domain,
+                    'source_host': source_host,
+                    'target_host': target_host,
+                    'cert_name': latest_info.cert_name,
+                    'reason': 'missing'
+                  } -%}
+                  {%- set _ = result.append(copy_item) -%}
+                {%- elif matching_certs[0] < latest_info.expiry -%}
+                  {%- set copy_item = {
+                    'domain': domain,
+                    'source_host': source_host,
+                    'target_host': target_host,
+                    'cert_name': latest_info.cert_name,
+                    'reason': 'outdated'
+                  } -%}
+                  {%- set _ = result.append(copy_item) -%}
                 {%- endif -%}
               {%- endif -%}
             {%- endfor -%}
           {%- endfor -%}
-          {{ plan }}
+          {{ result }}
+      run_once: true
+
+    - name: Determine sync plan - identify outdated certificates
+      set_fact:
+        certificates_to_remove: >-
+          {%- set result = [] -%}
+          {%- for copy_item in certificates_to_copy -%}
+            {%- if copy_item.reason == 'outdated' -%}
+              {%- for cert_entry in global_cert_inventory[copy_item.target_host] -%}
+                {%- set parts = cert_entry.split(':') -%}
+                {%- if parts[1] == copy_item.domain and parts[1] != 'MISSING' -%}
+                  {%- set remove_item = {
+                    'host': copy_item.target_host,
+                    'cert_name': parts[0],
+                    'domain': copy_item.domain,
+                    'old_expiry': parts[2],
+                    'new_expiry': copy_item.cert_name + ' from ' + copy_item.source_host
+                  } -%}
+                  {%- set _ = result.append(remove_item) -%}
+                {%- endif -%}
+              {%- endfor -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ result }}
       run_once: true
       delegate_to: localhost
+
+    - name: Show sync plan - certificates to copy
+      debug:
+        msg: "COPY: {{ item.domain }} from {{ item.source_host }}:{{ item.cert_name }} to {{ item.target_host }} ({{ item.reason }})"
+      loop: "{{ certificates_to_copy }}"
+      run_once: true
+      when: certificates_to_copy | length > 0
+
+    - name: Show sync plan - certificates to remove
+      debug:
+        msg: "REMOVE: {{ item.host }}:{{ item.cert_name }} ({{ item.domain }}) - replaced by {{ item.new_expiry }}"
+      loop: "{{ certificates_to_remove }}"
+      run_once: true
+      when: certificates_to_remove | length > 0
+
+    - name: Show sync plan summary
+      debug:
+        msg: "Sync plan: {{ certificates_to_copy | length }} certificates to copy, {{ certificates_to_remove | length }} certificates to remove"
+      run_once: true
       
     - name: Execute certificate synchronization
       debug:
