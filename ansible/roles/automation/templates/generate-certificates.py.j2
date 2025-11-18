@@ -87,9 +87,7 @@ class CertificateGenerator:
         if not cert_path.exists():
             return False
             
-        # Check if the certificate is actually readable and valid
         try:
-            import subprocess
             result = subprocess.run([
                 'openssl', 'x509', '-in', str(cert_path), '-noout', '-subject'
             ], capture_output=True, text=True)
