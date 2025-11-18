@@ -84,7 +84,18 @@ class CertificateGenerator:
 
     def certificate_exists(self, domain_name):
         cert_path = self.letsencrypt_dir / domain_name / 'fullchain.pem'
-        return cert_path.exists()
+        if not cert_path.exists():
+            return False
+            
+        # Check if the certificate is actually readable and valid
+        try:
+            import subprocess
+            result = subprocess.run([
+                'openssl', 'x509', '-in', str(cert_path), '-noout', '-subject'
+            ], capture_output=True, text=True)
+            return result.returncode == 0
+        except Exception:
+            return False
     
     def generate_certificate(self, domain_name):
         if domain_name not in self.registry['certificates']:

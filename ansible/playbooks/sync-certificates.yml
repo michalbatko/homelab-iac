@@ -162,6 +162,98 @@
         msg: "Sync plan: {{ certificates_to_copy | length }} certificates to copy, {{ certificates_to_remove | length }} certificates to remove"
       run_once: true
       
-    - name: Execute certificate synchronization
+    - name: Execute certificate synchronization - copy archive files first
+      synchronize:
+        src: "/etc/letsencrypt/archive/{{ item.cert_name }}/"
+        dest: "/etc/letsencrypt/archive/{{ item.cert_name }}/"
+        rsync_opts:
+          - "--perms"
+          - "--owner"
+          - "--group" 
+          - "--times"
+          - "--recursive"
+          - "--delete"
+      delegate_to: "{{ item.source_host }}"
+      delegate_facts: false
+      loop: "{{ certificates_to_copy }}"
+      when: 
+        - certificates_to_copy | length > 0
+        - item.target_host == inventory_hostname
+      
+    - name: Execute certificate synchronization - copy live directory with symlinks
+      synchronize:
+        src: "{{ letsencrypt_dir }}/{{ item.cert_name }}/"
+        dest: "{{ letsencrypt_dir }}/{{ item.cert_name }}/"
+        rsync_opts:
+          - "--perms"
+          - "--owner" 
+          - "--group"
+          - "--times"
+          - "--recursive"
+          - "--delete"
+          - "--links"
+      delegate_to: "{{ item.source_host }}"
+      delegate_facts: false
+      loop: "{{ certificates_to_copy }}"
+      when: 
+        - certificates_to_copy | length > 0
+        - item.target_host == inventory_hostname
+
+    - name: Verify copied certificates exist and are valid
+      stat:
+        path: "{{ letsencrypt_dir }}/{{ item.cert_name }}/cert.pem"
+      register: copied_cert_check
+      loop: "{{ certificates_to_copy }}"
+      when: 
+        - certificates_to_copy | length > 0
+        - item.target_host == inventory_hostname
+      
+    - name: Validate copied certificate files
+      shell: |
+        if [ -f "{{ letsencrypt_dir }}/{{ item.item.cert_name }}/cert.pem" ]; then
+          openssl x509 -in "{{ letsencrypt_dir }}/{{ item.item.cert_name }}/cert.pem" -noout -subject > /dev/null
+          echo "VALID"
+        else
+          echo "MISSING"
+        fi
+      loop: "{{ copied_cert_check.results }}"
+      register: cert_validation
+      when: 
+        - certificates_to_copy | length > 0
+        - copied_cert_check.results is defined
+        - item is not skipped
+      changed_when: false
+
+    - name: Fail if any certificate validation failed
+      fail:
+        msg: "Certificate validation failed for {{ item.item.item.cert_name }}: {{ item.stdout }}"
+      loop: "{{ cert_validation.results }}"
+      when: 
+        - certificates_to_copy | length > 0
+        - cert_validation.results is defined
+        - item is not skipped
+        - item.stdout == "MISSING" or item.rc != 0
+
+    - name: Remove outdated certificate directories from live
+      file:
+        path: "{{ letsencrypt_dir }}/{{ item.cert_name }}"
+        state: absent
+      loop: "{{ certificates_to_remove }}"
+      when: 
+        - certificates_to_remove | length > 0
+        - item.host == inventory_hostname
+        
+    - name: Remove outdated certificate directories from archive
+      file:
+        path: "/etc/letsencrypt/archive/{{ item.cert_name }}"
+        state: absent
+      loop: "{{ certificates_to_remove }}"
+      when: 
+        - certificates_to_remove | length > 0
+        - item.host == inventory_hostname
+      
+    - name: Show synchronization results
       debug:
-        msg: "TODO: Copy certificate files between hosts"
+        msg: "Certificate synchronization completed: {{ certificates_to_copy | length }} certificates copied, {{ certificates_to_remove | length }} old certificates removed"
+      run_once: true
+      when: (certificates_to_copy | length > 0) or (certificates_to_remove | length > 0)
