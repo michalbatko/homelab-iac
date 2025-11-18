@@ -201,7 +201,7 @@
 
     - name: Verify copied certificates exist and are valid
       stat:
-        path: "{{ letsencrypt_dir }}/{{ item.cert_name }}/cert.pem"
+        path: "{{ letsencrypt_dir }}/{{ item.cert_name }}/fullchain.pem"
       register: copied_cert_check
       loop: "{{ certificates_to_copy }}"
       when: 
@@ -210,8 +210,8 @@
       
     - name: Validate copied certificate files
       shell: |
-        if [ -f "{{ letsencrypt_dir }}/{{ item.item.cert_name }}/cert.pem" ]; then
-          openssl x509 -in "{{ letsencrypt_dir }}/{{ item.item.cert_name }}/cert.pem" -noout -subject > /dev/null
+        if [ -f "{{ letsencrypt_dir }}/{{ item.item.cert_name }}/fullchain.pem" ]; then
+          openssl x509 -in "{{ letsencrypt_dir }}/{{ item.item.cert_name }}/fullchain.pem" -noout -subject > /dev/null
           echo "VALID"
         else
           echo "MISSING"
