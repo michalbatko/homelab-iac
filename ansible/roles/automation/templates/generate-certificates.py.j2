@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import glob
 import logging
 import os
 import subprocess
@@ -84,16 +85,28 @@ class CertificateGenerator:
 
     def certificate_exists(self, domain_name):
         cert_path = self.letsencrypt_dir / domain_name / 'fullchain.pem'
-        if not cert_path.exists():
-            return False
-            
-        try:
-            result = subprocess.run([
-                'openssl', 'x509', '-in', str(cert_path), '-noout', '-subject'
-            ], capture_output=True, text=True)
-            return result.returncode == 0
-        except Exception:
-            return False
+        if cert_path.exists():
+            try:
+                result = subprocess.run([
+                    'openssl', 'x509', '-in', str(cert_path), '-noout', '-subject'
+                ], capture_output=True, text=True)
+                if result.returncode == 0:
+                    return True
+            except Exception:
+                pass
+        
+        pattern = str(self.letsencrypt_dir / f"{domain_name}*/fullchain.pem")
+        for cert_file in glob.glob(pattern):
+            try:
+                result = subprocess.run([
+                    'openssl', 'x509', '-in', cert_file, '-noout', '-subject'
+                ], capture_output=True, text=True)
+                if result.returncode == 0 and domain_name in result.stdout:
+                    return True
+            except Exception:
+                continue
+        
+        return False
     
     def generate_certificate(self, domain_name):
         if domain_name not in self.registry['certificates']:
