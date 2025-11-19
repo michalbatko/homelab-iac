@@ -20,9 +20,9 @@
       
     - name: Extract certificate domains and expiry dates
       shell: |
-        if [ -f "{{ item.path }}/cert.pem" ]; then
-          domain=$(openssl x509 -in "{{ item.path }}/cert.pem" -subject -noout | sed 's/subject=CN = //')
-          expiry_raw=$(openssl x509 -in "{{ item.path }}/cert.pem" -enddate -noout | cut -d= -f2)
+        if [ -f "{{ item.path }}/fullchain.pem" ]; then
+          domain=$(openssl x509 -in "{{ item.path }}/fullchain.pem" -subject -noout | sed 's/subject=CN = //')
+          expiry_raw=$(openssl x509 -in "{{ item.path }}/fullchain.pem" -enddate -noout | cut -d= -f2)
           expiry=$(date -d "$expiry_raw" "+%Y%m%d-%H%M" 2>/dev/null || echo "$expiry_raw")
           echo "{{ item.path | basename }}:${domain}:${expiry}"
         else
