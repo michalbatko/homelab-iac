@@ -101,12 +101,8 @@ class CertificateGenerator:
                 result = subprocess.run([
                     'openssl', 'x509', '-in', cert_file, '-noout', '-subject'
                 ], capture_output=True, text=True)
-                if result.returncode == 0:
-                    subject_result = subprocess.run([
-                        'openssl', 'x509', '-in', cert_file, '-noout', '-subject'
-                    ], capture_output=True, text=True)
-                    if subject_result.returncode == 0 and domain_name in subject_result.stdout:
-                        return True
+                if result.returncode == 0 and domain_name in result.stdout:
+                    return True
             except Exception:
                 continue
         
