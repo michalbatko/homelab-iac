@@ -16,20 +16,41 @@
         var: context_info.stdout_lines
 
     - name: Create SSL directories
-      debug:
-        msg: "TODO: Create /etc/nginx/ssl/{{ item.domain }} locally"
+      file:
+        path: "/etc/nginx/ssl/{{ item.domain }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
       loop: "{{ nginx_certificates }}"
 
     - name: Copy certificate files
-      debug:
-        msg: "TODO: Copy /etc/letsencrypt/live/{{ item.domain }}/* from automation host to local /etc/nginx/ssl/{{ item.domain }}/"
+      synchronize:
+        src: "/etc/letsencrypt/live/{{ item.domain }}/"
+        dest: "/etc/nginx/ssl/{{ item.domain }}/"
+        rsync_opts:
+          - "--perms"
+          - "--times"
+          - "--recursive"
+          - "--links"
+          - "--copy-links"
+      delegate_to: "{{ groups['automation_hosts'][0] }}"
       loop: "{{ nginx_certificates }}"
 
     - name: Set file permissions
-      debug:
-        msg: "TODO: Set permissions on certificate files for {{ item.domain }}"
-      loop: "{{ nginx_certificates }}"
+      file:
+        path: "/etc/nginx/ssl/{{ item.domain }}/{{ cert_file }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ nginx_certificates | product(['fullchain.pem', 'privkey.pem', 'cert.pem', 'chain.pem']) | list }}"
+      vars:
+        cert_file: "{{ item[1] }}"
+      loop_control:
+        loop_var: item
 
     - name: Reload nginx service
-      debug:
-        msg: "TODO: Reload nginx locally"
+      systemd:
+        name: nginx
+        state: reloaded
+        enabled: yes
