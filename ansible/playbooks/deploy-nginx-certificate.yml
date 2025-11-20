@@ -32,22 +32,22 @@
           - "--perms"
           - "--times"
           - "--recursive"
-          - "--links"
           - "--copy-links"
       delegate_to: "{{ groups['automation_hosts'][0] }}"
+      delegate_facts: false
       loop: "{{ nginx_certificates }}"
 
     - name: Set file permissions
       file:
-        path: "/etc/nginx/ssl/{{ item.domain }}/{{ cert_file }}"
+        path: "/etc/nginx/ssl/{{ domain_cert_pair[0].domain }}/{{ cert_file }}"
         owner: root
         group: root
-        mode: '0644'
+        mode: "{{ '0600' if cert_file == 'privkey.pem' else '0644' }}"
       loop: "{{ nginx_certificates | product(['fullchain.pem', 'privkey.pem', 'cert.pem', 'chain.pem']) | list }}"
       vars:
-        cert_file: "{{ item[1] }}"
+        cert_file: "{{ domain_cert_pair[1] }}"
       loop_control:
-        loop_var: item
+        loop_var: domain_cert_pair
 
     - name: Reload nginx service
       systemd:
