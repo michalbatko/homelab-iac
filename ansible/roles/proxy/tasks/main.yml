@@ -5,6 +5,7 @@
       - unattended-upgrades
       - apt-listchanges
       - nginx
+      - rsync
     state: present
     update_cache: yes
 
