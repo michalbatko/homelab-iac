@@ -231,7 +231,7 @@
 - name: Deploy certificates to target systems
   command: deploy-certificates
   register: deploy_certificates_result
-  ignore_errors: "{{ ansible_check_mode }}"
+  ignore_errors: yes
 
 - name: Display certificate deployment output
   debug:
