@@ -4,16 +4,48 @@
   become: yes
 
   tasks:
-    - name: Show execution context
+    - name: Find certificate directories on automation host
       shell: |
-        echo "Hostname: $(hostname)"
-        echo "User: $(whoami)"
-        echo "Working directory: $(pwd)"
-      register: context_info
+        if [ -f "/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem" ]; then
+          echo "{{ item.domain }}"
+        else
+          latest_dir=$(ls -1dt /etc/letsencrypt/live/{{ item.domain }}* 2>/dev/null | head -1)
+          if [ -n "$latest_dir" ] && [ -f "$latest_dir/fullchain.pem" ]; then
+            basename "$latest_dir"
+          else
+            echo "NOTFOUND"
+          fi
+        fi
+      delegate_to: "{{ groups['automation_hosts'][0] }}"
+      loop: "{{ nginx_certificates }}"
+      loop_control:
+        label: "{{ item.domain }}"
+      register: cert_lookup
+      changed_when: false
 
-    - name: Display execution context
+    - name: Build deployment plan
+      set_fact:
+        certificates_to_deploy: >-
+          {{ cert_lookup.results 
+             | rejectattr('stdout', 'equalto', 'NOTFOUND')
+             | map(attribute='item') 
+             | list }}
+        cert_source_paths: >-
+          {%- set result = {} -%}
+          {%- for check in cert_lookup.results -%}
+            {%- if check.stdout != 'NOTFOUND' -%}
+              {%- set _ = result.update({check.item.domain: check.stdout}) -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ result }}
+
+    - name: Show deployment summary
       debug:
-        var: context_info.stdout_lines
+        msg: 
+          - "Deploying {{ certificates_to_deploy | length }} of {{ nginx_certificates | length }} certificates"
+          - "Ready: {{ certificates_to_deploy | map(attribute='domain') | list }}"
+          - "Missing: {{ cert_lookup.results | selectattr('stdout', 'equalto', 'NOTFOUND') | map(attribute='item.domain') | list }}"
+      when: certificates_to_deploy | length > 0 or (cert_lookup.results | selectattr('stdout', 'equalto', 'NOTFOUND') | list | length) > 0
 
     - name: Create SSL directories
       file:
@@ -22,11 +54,14 @@
         owner: root
         group: root
         mode: '0755'
-      loop: "{{ nginx_certificates }}"
+      loop: "{{ certificates_to_deploy }}"
+      loop_control:
+        label: "{{ item.domain }}"
+      when: certificates_to_deploy | length > 0
 
     - name: Copy certificate files
       synchronize:
-        src: "/etc/letsencrypt/live/{{ item.domain }}/"
+        src: "/etc/letsencrypt/live/{{ cert_source_paths[item.domain] }}/"
         dest: "/etc/nginx/ssl/{{ item.domain }}/"
         rsync_opts:
           - "--perms"
@@ -35,22 +70,37 @@
           - "--copy-links"
       delegate_to: "{{ groups['automation_hosts'][0] }}"
       delegate_facts: false
-      loop: "{{ nginx_certificates }}"
+      loop: "{{ certificates_to_deploy }}"
+      loop_control:
+        label: "{{ item.domain }}"
+      register: cert_copy_result
+      when: certificates_to_deploy | length > 0
 
-    - name: Set file permissions
+    - name: Set private key permissions
       file:
-        path: "/etc/nginx/ssl/{{ domain_cert_pair[0].domain }}/{{ cert_file }}"
+        path: "/etc/nginx/ssl/{{ item.domain }}/privkey.pem"
         owner: root
         group: root
-        mode: "{{ '0600' if cert_file == 'privkey.pem' else '0644' }}"
-      loop: "{{ nginx_certificates | product(['fullchain.pem', 'privkey.pem', 'cert.pem', 'chain.pem']) | list }}"
-      vars:
-        cert_file: "{{ domain_cert_pair[1] }}"
-      loop_control:
-        loop_var: domain_cert_pair
+        mode: '0600'
+      loop: "{{ certificates_to_deploy }}"
+      when: certificates_to_deploy | length > 0
+      no_log: true
+
+    - name: Set certificate file permissions
+      file:
+        path: "/etc/nginx/ssl/{{ item[0].domain }}/{{ item[1] }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ certificates_to_deploy | product(['fullchain.pem', 'cert.pem', 'chain.pem']) | list }}"
+      when: certificates_to_deploy | length > 0
+      no_log: true
 
     - name: Reload nginx service
       systemd:
         name: nginx
         state: reloaded
         enabled: yes
+      when: 
+        - certificates_to_deploy | length > 0
+        - cert_copy_result is changed
