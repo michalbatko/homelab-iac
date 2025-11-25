@@ -20,9 +20,11 @@ dns_records:
     ip: 192.168.100.24
   - name: proxy01
     ip: 192.168.100.26
+  - name: infra
+    cname: proxy01.home.batko.me.
   - name: vault
     cname: proxy01.home.batko.me.
-dns_serial: "2025100701"
+dns_serial: "2025112501"
 
 default_forwarders:
   - "1.1.1.1"
