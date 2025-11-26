@@ -3,27 +3,84 @@
   gather_facts: false
 
   tasks:
-    - name: Show execution context
+    - name: Find certificate directories
       shell: |
-        echo "Hostname: $(hostname)"
-        echo "User: $(whoami)"
-        echo "Working directory: $(pwd)"
-      register: context_info
-
-    - name: Display execution context
-      debug:
-        var: context_info.stdout_lines
-
-    - name: Load Proxmox API credentials
-      debug:
-        msg: "TODO: Load API token from {{ proxmox_api_token_file | default('/etc/letsencrypt/proxmox-api-token.ini') }}"
-
-    - name: Read certificate files from disk
-      debug:
-        msg: "TODO: Read cert.pem and privkey.pem for {{ item.domain }} from /etc/letsencrypt/live/"
+        if [ -f "/etc/letsencrypt/live/{{ item.domain }}/fullchain.pem" ]; then
+          echo "{{ item.domain }}"
+        else
+          latest_dir=$(ls -1dt /etc/letsencrypt/live/{{ item.domain }}* 2>/dev/null | head -1)
+          if [ -n "$latest_dir" ] && [ -f "$latest_dir/fullchain.pem" ]; then
+            basename "$latest_dir"
+          else
+            echo "NOTFOUND"
+          fi
+        fi
       loop: "{{ proxmox_certificates }}"
+      loop_control:
+        label: "{{ item.domain }}"
+      register: cert_lookup
+      changed_when: false
+
+    - name: Build deployment plan
+      set_fact:
+        certificates_to_deploy: >-
+          {{ cert_lookup.results 
+             | rejectattr('stdout', 'equalto', 'NOTFOUND')
+             | map(attribute='item') 
+             | list }}
+        cert_source_paths: >-
+          {%- set result = {} -%}
+          {%- for check in cert_lookup.results -%}
+            {%- if check.stdout != 'NOTFOUND' -%}
+              {%- set _ = result.update({check.item.domain: check.stdout}) -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ result }}
+
+    - name: Show deployment summary
+      debug:
+        msg: 
+          - "Deploying {{ certificates_to_deploy | length }} of {{ proxmox_certificates | length }} certificates"
+          - "Ready: {{ certificates_to_deploy | map(attribute='domain') | list }}"
+          - "Missing: {{ cert_lookup.results | selectattr('stdout', 'equalto', 'NOTFOUND') | map(attribute='item.domain') | list }}"
+      when: certificates_to_deploy | length > 0 or (cert_lookup.results | selectattr('stdout', 'equalto', 'NOTFOUND') | list | length) > 0
+
+    - name: Load Proxmox API token
+      slurp:
+        src: "{{ item.api_token_file }}"
+      loop: "{{ certificates_to_deploy }}"
+      loop_control:
+        label: "{{ item.domain }}"
+      register: api_token_files
+      when: certificates_to_deploy | length > 0
+      no_log: true
+
+    - name: Read certificate files
+      slurp:
+        src: "/etc/letsencrypt/live/{{ cert_source_paths[item.domain] }}/{{ item.file }}"
+      loop: "{{ certificates_to_deploy | product([{'file': 'fullchain.pem', 'key': 'cert'}, {'file': 'privkey.pem', 'key': 'key'}]) | list }}"
+      loop_control:
+        label: "{{ item[0].domain }}/{{ item[1].file }}"
+      register: cert_files
+      when: certificates_to_deploy | length > 0
+      no_log: true
 
     - name: Upload certificates via Proxmox API
-      debug:
-        msg: "TODO: POST certificate data to {{ item.api_endpoint }}/api2/json/nodes/.../certificates/custom for {{ item.domain }}"
-      loop: "{{ proxmox_certificates }}"
+      uri:
+        url: "{{ item.api_endpoint }}/api2/json/nodes/{{ item.node }}/certificates/custom"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          certificates: "{{ cert_files.results | selectattr('item.0.domain', 'equalto', item.domain) | selectattr('item.1.key', 'equalto', 'cert') | map(attribute='content') | first | b64decode }}"
+          key: "{{ cert_files.results | selectattr('item.0.domain', 'equalto', item.domain) | selectattr('item.1.key', 'equalto', 'key') | map(attribute='content') | first | b64decode }}"
+          restart: 1
+        headers:
+          Content-Type: "application/x-www-form-urlencoded"
+          Authorization: "PVEAPIToken={{ (api_token_files.results | selectattr('item.domain', 'equalto', item.domain) | map(attribute='content') | first | b64decode).strip() }}"
+        validate_certs: false
+        status_code: [200, 201, 202, 204]
+      loop: "{{ certificates_to_deploy }}"
+      loop_control:
+        label: "{{ item.domain }} → {{ item.node }}"
+      when: certificates_to_deploy | length > 0
+      no_log: true

@@ -126,8 +126,9 @@ class CertificateDeployer:
                 if target.get('type') == 'proxmox_api':
                     proxmox_certificates.append({
                         'domain': domain_name,
-                        'hosts': target.get('hosts', []),
-                        'api_endpoint': target.get('api_endpoint')
+                        'node': target.get('node'),
+                        'api_endpoint': target.get('api_endpoint'),
+                        'api_token_file': target.get('api_token_file', '/etc/letsencrypt/proxmox-api-token.ini')
                     })
         
         if not proxmox_certificates:
@@ -140,10 +141,7 @@ class CertificateDeployer:
         
         proxmox_vars_file = '/tmp/proxmox_certificates.json'
         with open(proxmox_vars_file, 'w') as f:
-            json.dump({
-                'proxmox_certificates': proxmox_certificates,
-                'proxmox_api_token_file': '/etc/letsencrypt/proxmox-api-token.ini'
-            }, f)
+            json.dump({'proxmox_certificates': proxmox_certificates}, f)
         
         cmd = [
             '/usr/bin/sudo', '-u', 'actions-runner',
