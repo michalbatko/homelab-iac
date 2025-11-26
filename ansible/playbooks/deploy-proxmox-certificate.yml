@@ -57,7 +57,7 @@
 
     - name: Read certificate files
       slurp:
-        src: "/etc/letsencrypt/live/{{ cert_source_paths[item.domain] }}/{{ item.file }}"
+        src: "/etc/letsencrypt/live/{{ cert_source_paths[item[0].domain] }}/{{ item[1].file }}"
       loop: "{{ certificates_to_deploy | product([{'file': 'fullchain.pem', 'key': 'cert'}, {'file': 'privkey.pem', 'key': 'key'}]) | list }}"
       loop_control:
         label: "{{ item[0].domain }}/{{ item[1].file }}"
