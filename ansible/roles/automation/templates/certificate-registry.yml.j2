@@ -1,4 +1,3 @@
-# Certificate registry - services register their certificate requirements here
 certificates:
   vault.home.batko.me:
     domains:
@@ -17,6 +16,12 @@ certificates:
         hosts: {{ groups['proxy_hosts'] | to_json }}
         service: nginx
         config_path: /etc/nginx/sites-available/proxy.conf
+
+  infra01.home.batko.me:
+    domains:
+      - infra01.home.batko.me
+    deployment_targets:
       - type: proxmox_api
-        hosts: {{ groups['infra_hosts'] | to_json }}
+        node: "{{ groups['infra_hosts'][0].split('.')[0] }}"
         api_endpoint: "https://{{ groups['infra_hosts'][0] }}:8006"
+        api_token_file: /etc/letsencrypt/proxmox-api-token.ini
