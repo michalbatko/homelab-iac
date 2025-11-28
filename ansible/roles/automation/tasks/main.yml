@@ -87,6 +87,13 @@
       - "{{ known_hosts_diff.stdout_lines }}"
   when: known_hosts_diff.rc != 0
 
+- name: Remove temporary file for scanned keys
+  file:
+    path: /tmp/scanned_known_hosts
+    state: absent
+  changed_when: false
+  become_user: actions-runner
+
 - name: Add HashiCorp GPG key
   apt_key:
     url: https://apt.releases.hashicorp.com/gpg
