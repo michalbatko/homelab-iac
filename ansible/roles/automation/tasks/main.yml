@@ -86,7 +86,7 @@
     msg: 
       - "Differences found in known_hosts:"
       - "{{ known_hosts_diff.stdout_lines }}"
-  when: known_hosts_diff.rc != 0
+  when: scanned_keys is succeeded and known_hosts_diff.rc != 0
 
 - name: Remove temporary file for scanned keys
   file:
@@ -94,6 +94,7 @@
     state: absent
   changed_when: false
   become_user: actions-runner
+  when: scanned_keys is succeeded
 
 - name: Add HashiCorp GPG key
   apt_key:
