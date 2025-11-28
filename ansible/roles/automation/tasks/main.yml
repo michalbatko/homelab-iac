@@ -68,7 +68,7 @@
   copy:
     content: "{{ scanned_keys.stdout }}"
     dest: /tmp/scanned_known_hosts
-    mode: '0644'
+    mode: '0600'
   changed_when: false
   become_user: actions-runner
   when: scanned_keys is succeeded
