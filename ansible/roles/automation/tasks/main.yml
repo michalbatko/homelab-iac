@@ -57,7 +57,7 @@
   changed_when: false
 
 - name: Scan SSH keys for all hosts
-  command: ssh-keyscan -H {{ groups['all'] | join(' ') }}
+  command: ssh-keyscan {{ groups['all'] | join(' ') }}
   register: scanned_keys
   changed_when: false
   ignore_errors: "{{ ansible_check_mode }}"
