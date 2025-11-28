@@ -70,6 +70,7 @@
     mode: '0644'
   changed_when: false
   become_user: actions-runner
+  when: scanned_keys is succeeded
 
 - name: Check for known_hosts differences
   command: diff -u /opt/actions-runner/.ssh/known_hosts /tmp/scanned_known_hosts
