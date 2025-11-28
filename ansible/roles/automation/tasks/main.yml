@@ -54,10 +54,11 @@
     owner: actions-runner
     group: actions-runner
     mode: '0600'
-  changed_when: false
+    modification_time: preserve
+    access_time: preserve
 
 - name: Scan SSH keys for all hosts
-  command: ssh-keyscan -H {{ groups['all'] | join(' ') }}
+  command: ssh-keyscan {{ groups['all'] | join(' ') }}
   register: scanned_keys
   changed_when: false
   ignore_errors: "{{ ansible_check_mode }}"
@@ -67,9 +68,10 @@
   copy:
     content: "{{ scanned_keys.stdout }}"
     dest: /tmp/scanned_known_hosts
-    mode: '0644'
+    mode: '0600'
   changed_when: false
   become_user: actions-runner
+  when: scanned_keys is succeeded
 
 - name: Check for known_hosts differences
   command: diff -u /opt/actions-runner/.ssh/known_hosts /tmp/scanned_known_hosts
@@ -77,13 +79,22 @@
   failed_when: false
   changed_when: false
   become_user: actions-runner
+  when: scanned_keys is succeeded
 
 - name: Display known_hosts differences
   debug:
     msg: 
       - "Differences found in known_hosts:"
       - "{{ known_hosts_diff.stdout_lines }}"
-  when: known_hosts_diff.rc != 0
+  when: scanned_keys is succeeded and known_hosts_diff.rc != 0
+
+- name: Remove temporary file for scanned keys
+  file:
+    path: /tmp/scanned_known_hosts
+    state: absent
+  changed_when: false
+  become_user: actions-runner
+  when: scanned_keys is succeeded
 
 - name: Add HashiCorp GPG key
   apt_key:
