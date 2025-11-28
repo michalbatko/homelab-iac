@@ -54,7 +54,8 @@
     owner: actions-runner
     group: actions-runner
     mode: '0600'
-  changed_when: false
+    modification_time: preserve
+    access_time: preserve
 
 - name: Scan SSH keys for all hosts
   command: ssh-keyscan {{ groups['all'] | join(' ') }}
