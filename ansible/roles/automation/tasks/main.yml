@@ -95,6 +95,7 @@
     owner: actions-runner
     group: actions-runner
     mode: '0600'
+    remote_src: yes
   become_user: actions-runner
   when: scanned_keys is succeeded and known_hosts_diff.rc != 0
 
