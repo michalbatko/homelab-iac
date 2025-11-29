@@ -88,6 +88,16 @@
       - "{{ known_hosts_diff.stdout_lines }}"
   when: scanned_keys is succeeded and known_hosts_diff.rc != 0
 
+- name: Update known_hosts file with scanned keys
+  copy:
+    src: /tmp/scanned_known_hosts
+    dest: /opt/actions-runner/.ssh/known_hosts
+    owner: actions-runner
+    group: actions-runner
+    mode: '0600'
+  become_user: actions-runner
+  when: scanned_keys is succeeded and known_hosts_diff.rc != 0
+
 - name: Remove temporary file for scanned keys
   file:
     path: /tmp/scanned_known_hosts
