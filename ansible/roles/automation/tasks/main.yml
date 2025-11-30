@@ -81,13 +81,6 @@
   become_user: actions-runner
   when: scanned_keys is succeeded
 
-- name: Display known_hosts differences
-  debug:
-    msg: 
-      - "Differences found in known_hosts:"
-      - "{{ known_hosts_diff.stdout_lines }}"
-  when: scanned_keys is succeeded and known_hosts_diff.rc != 0
-
 - name: Update known_hosts file with scanned keys
   copy:
     src: /tmp/scanned_known_hosts

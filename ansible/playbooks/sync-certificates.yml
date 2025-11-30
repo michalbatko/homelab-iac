@@ -5,7 +5,7 @@
   vars:
     letsencrypt_dir: /etc/letsencrypt/live
     ansible_ssh_timeout: 30
-    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30'
+    ansible_ssh_common_args: '-o UserKnownHostsFile=/opt/actions-runner/.ssh/known_hosts -o ConnectTimeout=30'
     
   tasks:
     - name: Find certificate directories
