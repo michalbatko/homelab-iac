@@ -183,10 +183,6 @@ class CertificateDeployer:
             except FileNotFoundError:
                 pass
 
-    def deploy_certificate(self, domain_name):
-        logger.info(f"TODO: Deploy certificate for {domain_name}")
-        return True
-    
     def deploy_all_certificates(self):
         certificates = self.registry.get('certificates', {})
         
@@ -205,10 +201,6 @@ class CertificateDeployer:
         if not self.deploy_proxmox_certificates():
             logger.error("Failed to deploy certificates to proxmox servers")
             deployment_success = False
-        
-        for domain_name in certificates.keys():
-            if not self.deploy_certificate(domain_name):
-                deployment_success = False
         
         return deployment_success
 
