@@ -21,3 +21,9 @@ module "vault" {
 
   ansible_ssh_public_key = local.ansible_ssh_public_key
 }
+
+module "web" {
+  source = "./web"
+
+  ansible_ssh_public_key = local.ansible_ssh_public_key
+}
