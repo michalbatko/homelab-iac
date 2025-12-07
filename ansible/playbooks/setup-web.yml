@@ -1,4 +1,4 @@
-- name: Setup Web Server
+- name: Setup web server
   hosts: web_hosts
   become: yes
   roles:
