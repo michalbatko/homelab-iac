@@ -1,0 +1,9 @@
+- name: Restart unattended-upgrades
+  service:
+    name: unattended-upgrades
+    state: restarted
+
+- name: Restart nginx
+  service:
+    name: nginx
+    state: restarted
