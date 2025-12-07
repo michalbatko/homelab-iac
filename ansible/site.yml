@@ -3,3 +3,4 @@
 - import_playbook: playbooks/setup-infra.yml
 - import_playbook: playbooks/setup-proxy.yml
 - import_playbook: playbooks/setup-vault.yml
+- import_playbook: playbooks/setup-web.yml
