@@ -5,8 +5,8 @@ decided to repurpose it as a home server and a playground to learn DevOps tools 
 ### Rules
 - Avoid “ClickOps” and use Infrastructure as Code as much as I can
 - Keep everything in a public GitHub repository
-- Merge at least one pull request per day
 - Be mindful of security, since the code is public
+- Merge at least one pull request per day (any homelab related repo)
 - Stick to free or low-cost tools and services
 
 ### Tech-stack
