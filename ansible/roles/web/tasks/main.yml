@@ -4,7 +4,8 @@
       - sudo
       - unattended-upgrades
       - apt-listchanges
-      - nginx
+      - docker.io
+      - docker-compose
     state: present
     update_cache: yes
 
