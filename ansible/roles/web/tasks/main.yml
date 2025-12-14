@@ -6,6 +6,7 @@
       - apt-listchanges
       - docker.io
       - docker-compose
+      - python3-docker
     state: present
     update_cache: yes
 
@@ -21,3 +22,13 @@
     group: root
     mode: '0644'
   notify: Restart unattended-upgrades
+
+- name: Deploy website container
+  community.docker.docker_container:
+    name: batko-me-web
+    image: ghcr.io/michalbatko/batko-me-web:0.1.0
+    state: started
+    restart_policy: always
+    ports:
+      - "80:3000"
+    pull: yes
