@@ -28,6 +28,7 @@
     name: batko-me-web
     image: ghcr.io/michalbatko/batko-me-web:0.1.0
     state: started
+    recreate: yes
     restart_policy: always
     ports:
       - "80:3000"
