@@ -1,7 +1,8 @@
 certificates:
-  vault.home.batko.me:
+  batko.me:
     domains:
-      - vault.home.batko.me
+      - batko.me
+      - www.batko.me
     deployment_targets:
       - type: nginx
         hosts: {{ groups['proxy_hosts'] | to_json }}
@@ -25,3 +26,12 @@ certificates:
         node: "{{ groups['infra_hosts'][0].split('.')[0] }}"
         api_endpoint: "https://{{ groups['infra_hosts'][0] }}:8006"
         api_token_file: /etc/letsencrypt/proxmox-api-token.ini
+
+  vault.home.batko.me:
+    domains:
+      - vault.home.batko.me
+    deployment_targets:
+      - type: nginx
+        hosts: {{ groups['proxy_hosts'] | to_json }}
+        service: nginx
+        config_path: /etc/nginx/sites-available/proxy.conf
