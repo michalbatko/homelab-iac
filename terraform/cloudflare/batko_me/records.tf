@@ -64,8 +64,8 @@ resource "cloudflare_dns_record" "TXT__dmarc_batko_me_dmarc" {
   proxied = false
 }
 
-# Placeholder DNS records for apex domain
-resource "cloudflare_dns_record" "batko_me_placeholder" {
+# Placeholder DNS records for apex domain and www subdomain
+resource "cloudflare_dns_record" "A_batko_me" {
   zone_id = cloudflare_zone.batko_me_zone.id
   type    = "A"
   name    = "@"
@@ -74,7 +74,7 @@ resource "cloudflare_dns_record" "batko_me_placeholder" {
   proxied = false
 }
 
-resource "cloudflare_dns_record" "www_batko_me_placeholder" {
+resource "cloudflare_dns_record" "CNAME_www_batko_me" {
   zone_id = cloudflare_zone.batko_me_zone.id
   type    = "CNAME"
   name    = "www"
