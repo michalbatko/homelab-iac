@@ -101,10 +101,10 @@
   when: scanned_keys is succeeded
 
 - name: Add HashiCorp GPG key
-  apt_key:
+  get_url:
     url: https://apt.releases.hashicorp.com/gpg
-    keyring: /usr/share/keyrings/hashicorp-archive-keyring.gpg
-    state: present
+    dest: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    mode: '0644'
   ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Add HashiCorp repository
