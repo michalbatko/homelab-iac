@@ -22,6 +22,26 @@
     mode: '0644'
   notify: Restart unattended-upgrades
 
+- name: Add Cloudflare GPG key
+  get_url:
+    url: https://pkg.cloudflare.com/cloudflare-main.gpg
+    dest: /usr/share/keyrings/cloudflare-main.gpg
+    mode: '0644'
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Add Cloudflare repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main"
+    filename: cloudflared
+    state: present
+    update_cache: yes
+
+- name: Install cloudflared
+  apt:
+    name: cloudflared
+    state: present
+  ignore_errors: "{{ ansible_check_mode }}"
+
 - name: Remove default nginx site
   file:
     path: /etc/nginx/sites-enabled/default
