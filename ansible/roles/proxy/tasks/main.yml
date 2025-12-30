@@ -4,6 +4,7 @@
       - sudo
       - unattended-upgrades
       - apt-listchanges
+      - curl
       - gpg
       - nginx
       - rsync
