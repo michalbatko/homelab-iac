@@ -27,17 +27,8 @@
 - name: Download Cloudflare GPG key
   get_url:
     url: https://pkg.cloudflare.com/cloudflare-main.gpg
-    dest: /usr/share/keyrings/cloudflare-main.asc
+    dest: /usr/share/keyrings/cloudflare-main.gpg
     mode: '0644'
-  register: cloudflare_key_download
-  ignore_errors: "{{ ansible_check_mode }}"
-
-- name: Dearmor Cloudflare GPG key
-  shell: |
-    gpg --dearmor < /usr/share/keyrings/cloudflare-main.asc > /usr/share/keyrings/cloudflare-main.gpg
-  args:
-    creates: /usr/share/keyrings/cloudflare-main.gpg
-  when: cloudflare_key_download.changed
   ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Add Cloudflare repository
