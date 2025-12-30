@@ -4,6 +4,7 @@
       - sudo
       - unattended-upgrades
       - apt-listchanges
+      - gpg
       - nginx
       - rsync
     state: present
@@ -22,12 +23,20 @@
     mode: '0644'
   notify: Restart unattended-upgrades
 
-- name: Add Cloudflare GPG key
+- name: Download Cloudflare GPG key
+  get_url:
+    url: https://pkg.cloudflare.com/cloudflare-main.gpg
+    dest: /usr/share/keyrings/cloudflare-main.asc
+    mode: '0644'
+  register: cloudflare_key_download
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Dearmor Cloudflare GPG key
   shell: |
-    curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | \
-    gpg --dearmor -o /usr/share/keyrings/cloudflare-main.gpg
+    gpg --dearmor < /usr/share/keyrings/cloudflare-main.asc > /usr/share/keyrings/cloudflare-main.gpg
   args:
     creates: /usr/share/keyrings/cloudflare-main.gpg
+  when: cloudflare_key_download.changed
   ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Add Cloudflare repository
