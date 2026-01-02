@@ -6,6 +6,7 @@
       - apt-listchanges
       - curl
       - gpg
+      - python3-hvac
     state: present
     update_cache: yes
 
