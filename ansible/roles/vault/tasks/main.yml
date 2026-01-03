@@ -89,3 +89,31 @@
   notify:
     - Reload systemd
     - Restart vault
+
+- name: Check if KV secrets engine is enabled
+  uri:
+    url: "https://vault.home.batko.me/v1/sys/mounts"
+    method: GET
+    headers:
+      X-Vault-Token: "{{ vault_root_token }}"
+    validate_certs: yes
+    return_content: yes
+  register: vault_mounts
+  when: vault_root_token is defined and vault_root_token | length > 0
+
+- name: Enable KV secrets engine
+  uri:
+    url: "https://vault.home.batko.me/v1/sys/mounts/secret"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_root_token }}"
+    body_format: json
+    body:
+      type: kv
+      options:
+        version: "2"
+    validate_certs: yes
+    status_code: [204]
+  when: 
+    - vault_root_token is defined and vault_root_token | length > 0
+    - "'secret/' not in vault_mounts.json|default({})"
