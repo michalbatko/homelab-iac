@@ -116,4 +116,4 @@
     status_code: [204]
   when: 
     - vault_root_token is defined and vault_root_token | length > 0
-    - "'secret/' not in vault_mounts.json|default({})"
+    - "'secret/' not in (vault_mounts.json|default({})).keys()"
