@@ -3,6 +3,7 @@ certificates:
     domains:
       - batko.me
       - www.batko.me
+      - web.home.batko.me
     deployment_targets:
       - type: nginx
         hosts: {{ groups['proxy_hosts'] | to_json }}
