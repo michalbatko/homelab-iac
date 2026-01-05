@@ -1,13 +1,13 @@
-# batko.me, www.batko.me → web01.home.batko.me:80
+# batko.me, www.batko.me, web.home.batko.me → web01.home.batko.me:80
 server {
     listen 80;
-    server_name batko.me www.batko.me;
+    server_name batko.me www.batko.me web.home.batko.me;
     return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl;
-    server_name batko.me www.batko.me;
+    server_name batko.me www.batko.me web.home.batko.me;
 
     ssl_certificate /etc/nginx/ssl/batko.me/fullchain.pem;
     ssl_certificate_key /etc/nginx/ssl/batko.me/privkey.pem;
