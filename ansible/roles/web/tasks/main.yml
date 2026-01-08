@@ -26,7 +26,7 @@
 - name: Deploy website container
   community.docker.docker_container:
     name: batko-me-web
-    image: ghcr.io/michalbatko/batko-me-web:0.1.0
+    image: ghcr.io/michalbatko/batko-me-web:0.1.1
     state: started
     recreate: yes
     restart_policy: always
